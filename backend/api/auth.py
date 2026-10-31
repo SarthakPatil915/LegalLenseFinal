@@ -151,7 +151,15 @@ def set_session(response: Response, user: dict[str, Any]) -> None:
     get_database().sessions.insert_one({"tokenHash": hashlib.sha256(token.encode()).hexdigest(), "userId": user["_id"], "createdAt": utcnow(), "expiresAt": utcnow() + timedelta(days=SESSION_DAYS)})
     app_env = os.getenv("APP_ENV", "production").strip().lower()
     secure_cookie = app_env not in {"development", "dev", "local"}
-    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax", secure=secure_cookie, max_age=SESSION_DAYS * 86400, path="/")
+    response.set_cookie(
+        SESSION_COOKIE,
+        token,
+        httponly=True,
+        samesite="none" if secure_cookie else "lax",
+        secure=secure_cookie,
+        max_age=SESSION_DAYS * 86400,
+        path="/",
+    )
 
 
 @router.post("/demo-session")
@@ -179,7 +187,7 @@ def create_demo_session(
         DEMO_SESSION_COOKIE,
         token,
         httponly=True,
-        samesite="lax",
+        samesite="none" if secure_cookie else "lax",
         secure=secure_cookie,
         max_age=DEMO_SESSION_HOURS * 3600,
         path="/",

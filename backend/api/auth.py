@@ -214,6 +214,12 @@ def logout_demo_session(
 
 @router.post("/signup")
 def signup(payload: SignupRequest):
+    """Create an email-verified account; official public signup is demo-only.
+
+    Set APP_ENV=demo only for non-sensitive demonstrations. Production public
+    signups remain manufacturer accounts; official production accounts must be
+    created through the protected provisioning endpoint.
+    """
     db = get_database()
     email = normalize_email(str(payload.email))
     existing = db.users.find_one({"email": email})
@@ -221,12 +227,13 @@ def signup(payload: SignupRequest):
         raise HTTPException(status_code=409, detail="Account already exists. Please log in.")
     password_hash = bcrypt.hashpw(payload.password.encode(), bcrypt.gensalt()).decode()
     now = utcnow()
-    user_data = {"fullName": payload.fullName.strip(), "email": email, "passwordHash": password_hash, "companyName": (payload.companyName or "").strip(), "gstin": (payload.gstin or "").strip(), "emailVerified": False, "createdAt": now, "updatedAt": now}
+    app_env = os.getenv("APP_ENV", "production").strip().lower()
+    signup_role = "official" if app_env == "demo" else "manufacturer"
+    user_data = {"fullName": payload.fullName.strip(), "email": email, "passwordHash": password_hash, "role": signup_role, "companyName": (payload.companyName or "").strip(), "gstin": (payload.gstin or "").strip(), "emailVerified": False, "createdAt": now, "updatedAt": now}
     if existing:
         db.users.update_one({"_id": existing["_id"]}, {"$set": user_data})
         user = db.users.find_one({"_id": existing["_id"]})
     else:
-        user_data["role"] = "official"
         user_data["verificationOtpAttempts"] = 0
         user_id = db.users.insert_one(user_data).inserted_id
         user = db.users.find_one({"_id": user_id})

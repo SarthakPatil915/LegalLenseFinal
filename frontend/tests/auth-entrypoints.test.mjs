@@ -33,16 +33,17 @@ test('login page exposes only the official email/password API form', () => {
   assert.equal((login.match(/<form\b/g) || []).length, 1);
 });
 
-test('new account registration uses only the existing email-verified manufacturer workflow', () => {
+test('new account registration submits only identity credentials and keeps email verification', () => {
   const registration = readFrontendFile('registration.html');
 
   assert.match(registration, /Create New Account/);
   assert.match(registration, /registration-layout[\s\S]*max-width: 680px/);
   assert.match(registration, /registration-card[\s\S]*border-radius: 16px/);
-  assert.match(registration, /registration-info[\s\S]*Email verification is required before login/);
+  assert.match(registration, /registration-info[\s\S]*APP_ENV=demo[\s\S]*non-sensitive demonstration data only/);
   assert.match(registration, /LLAuth\.signup\(\{/);
   assert.match(registration, /LLAuth\.signup\(\{\s*fullName: document\.getElementById\('fullName'\)\.value\.trim\(\),\s*email: email,\s*password: password\s*\}\)/);
-  assert.doesNotMatch(registration, /role: 'manufacturer'/);
+  assert.doesNotMatch(registration, /role:\s*['"](?:manufacturer|official)['"]/);
+  assert.doesNotMatch(registration, /id="(?:companyName|gstin)"/);
   assert.match(registration, /verify-email\.html\?email=/);
   assert.match(registration, /confirm-password/);
   assert.match(registration, /data-password-toggle="password"/);

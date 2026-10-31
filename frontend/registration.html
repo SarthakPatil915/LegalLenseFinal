@@ -164,12 +164,6 @@
             line-height: 1.4;
         }
 
-        .registration-optional {
-            color: var(--registration-muted);
-            font-size: 12px;
-            font-weight: 400;
-        }
-
         .registration-control-wrap {
             position: relative;
         }
@@ -457,24 +451,16 @@
         <h1 class="registration-heading">Create New Account</h1>
         <p class="registration-subheading">Create your LegalLense account to get started.</p>
 
-        <section class="registration-card" aria-label="Create a Manufacturer Account">
+        <section class="registration-card" aria-label="Create an Account">
             <div class="registration-info" role="note">
                 <span class="material-symbols-outlined registration-info-icon" aria-hidden="true">info</span>
-                <p>Create your account using your name, email address and password. Email verification is required before login.</p>
+                <p>Email verification is required. Public registration receives an official role only when the backend runs with APP_ENV=demo. Use non-sensitive demonstration data only; production official accounts must be provisioned by an administrator.</p>
             </div>
 
             <form class="registration-form" id="register-form">
                 <div class="registration-field">
-                    <label class="registration-label" for="companyName">Company name</label>
-                    <input class="registration-input" id="companyName" name="companyName" type="text" autocomplete="organization" maxlength="160" placeholder="Enter your company name" required>
-                </div>
-                <div class="registration-field">
                     <label class="registration-label" for="fullName">Full name</label>
                     <input class="registration-input" id="fullName" name="fullName" type="text" autocomplete="name" minlength="2" maxlength="120" placeholder="Enter your full name" required>
-                </div>
-                <div class="registration-field">
-                    <label class="registration-label" for="gstin">GSTIN / Registration number <span class="registration-optional">(optional)</span></label>
-                    <input class="registration-input" id="gstin" name="gstin" type="text" autocomplete="off" maxlength="32" placeholder="Enter registration number">
                 </div>
                 <div class="registration-field">
                     <label class="registration-label" for="email">Email address</label>

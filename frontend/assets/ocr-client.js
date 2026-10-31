@@ -7,7 +7,7 @@
   var isLocalHost = /^(localhost|127\.0\.0\.1)$/.test(global.location.hostname);
   var DEFAULT_BASE_URL = isLocalHost
     ? "http://" + global.location.hostname + ":8000"
-    : "https://legallens-lil2.onrender.com";
+    : "https://legallensefinal-backend.onrender.com";
   var ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
   var ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
 

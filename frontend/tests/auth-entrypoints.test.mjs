@@ -67,7 +67,7 @@ test('official login uses the HTTPS production authentication API', async () => 
 
   await context.LLAuth.login({ email: 'official@example.gov', password: 'test-password', role: 'official' });
 
-  assert.equal(requests[0].url, 'https://legallens-lil2.onrender.com/api/auth/login');
+  assert.equal(requests[0].url, 'https://legallensefinal-backend.onrender.com/api/auth/login');
   assert.equal(requests[0].options.method, 'POST');
   assert.deepEqual(JSON.parse(requests[0].options.body), {
     email: 'official@example.gov',

@@ -4,7 +4,7 @@
   var isLocalHost = /^(localhost|127\.0\.0\.1)$/.test(global.location.hostname);
   var API_ORIGIN = isLocalHost
     ? "http://" + global.location.hostname + ":8000"
-    : "https://legallens-lil2.onrender.com";
+    : "https://legallensefinal-backend.onrender.com";
   var API_BASE = API_ORIGIN + "/api/auth";
   function request(path, options) {
     options = options || {};

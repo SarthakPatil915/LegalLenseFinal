@@ -455,12 +455,12 @@
         </header>
 
         <h1 class="registration-heading">Create New Account</h1>
-        <p class="registration-subheading">Register your manufacturer account to get started.</p>
+        <p class="registration-subheading">Create your LegalLense account to get started.</p>
 
         <section class="registration-card" aria-label="Create a Manufacturer Account">
             <div class="registration-info" role="note">
                 <span class="material-symbols-outlined registration-info-icon" aria-hidden="true">info</span>
-                <p>Manufacturer accounts are verified by email before sign-in. Enforcement Official accounts are provisioned through authorized government channels.</p>
+                <p>Create your account using your name, email address and password. Email verification is required before login.</p>
             </div>
 
             <form class="registration-form" id="register-form">
@@ -558,10 +558,7 @@
                 await LLAuth.signup({
                     fullName: document.getElementById('fullName').value.trim(),
                     email: email,
-                    password: password,
-                    role: 'manufacturer',
-                    companyName: document.getElementById('companyName').value.trim(),
-                    gstin: document.getElementById('gstin').value.trim()
+                    password: password
                 });
                 location.href = 'verify-email.html?email=' + encodeURIComponent(email);
             } catch (err) {

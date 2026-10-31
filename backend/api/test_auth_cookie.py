@@ -30,6 +30,7 @@ def test_session_cookie_is_secure_by_default(monkeypatch):
 
     assert "; Secure" in cookie
     assert "; HttpOnly" in cookie
+    assert "; SameSite=none" in cookie
 
 
 def test_session_cookie_can_be_insecure_for_local_development(monkeypatch):
@@ -37,6 +38,7 @@ def test_session_cookie_can_be_insecure_for_local_development(monkeypatch):
 
     assert "; Secure" not in cookie
     assert "; HttpOnly" in cookie
+    assert "; SameSite=lax" in cookie
 
 
 def test_session_cookie_is_secure_in_production(monkeypatch):
@@ -44,3 +46,4 @@ def test_session_cookie_is_secure_in_production(monkeypatch):
 
     assert "; Secure" in cookie
     assert "; HttpOnly" in cookie
+    assert "; SameSite=none" in cookie

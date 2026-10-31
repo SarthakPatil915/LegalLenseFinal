@@ -226,7 +226,7 @@ def signup(payload: SignupRequest):
         db.users.update_one({"_id": existing["_id"]}, {"$set": user_data})
         user = db.users.find_one({"_id": existing["_id"]})
     else:
-        user_data["role"] = "manufacturer"
+        user_data["role"] = "official"
         user_data["verificationOtpAttempts"] = 0
         user_id = db.users.insert_one(user_data).inserted_id
         user = db.users.find_one({"_id": user_id})

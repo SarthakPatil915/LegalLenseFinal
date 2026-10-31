@@ -25,6 +25,9 @@
     });
   }
   global.LLAuth = {
+    createDemoSession: function () { return request("/demo-session", { method: "POST" }); },
+    validateDemoSession: function () { return request("/demo-session"); },
+    logoutDemo: function () { return request("/demo-session/logout", { method: "POST" }); },
     signup: function (data) { return request("/signup", { method: "POST", body: JSON.stringify(data) }); },
     verifyEmail: function (data) { return request("/verify-email", { method: "POST", body: JSON.stringify(data) }); },
     resendVerification: function (email) { return request("/resend-verification", { method: "POST", body: JSON.stringify({ email: email }) }); },
@@ -104,7 +107,7 @@
   var page = (window.location.pathname.split("/").pop() || "").toLowerCase();
   if (["profile.html", "compliance-result.html"].indexOf(page) !== -1 && !document.querySelector('script[src*="shell.js"]')) {
     var shell = document.createElement("script");
-    shell.src = "assets/shell.js";
+    shell.src = "assets/shell.js?v=20261031-7";
     document.head.appendChild(shell);
   }
 })();

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html lang="en"><head>
 <meta charset="utf-8"/>
@@ -248,7 +248,7 @@
 </div>
 </aside>
 <!-- Main Content Area -->
-<main class="ml-[260px] flex-1 flex flex-col min-w-0 bg-background">
+<main class="flex-1 flex flex-col min-w-0 bg-background">
 <!-- TopAppBar -->
 <header class="bg-surface flex justify-between items-center h-16 px-8 sticky top-0 z-40 border-b border-outline-variant transition-all duration-200 ease-in-out shadow-sm">
 <div class="flex-1 flex items-center gap-8">
@@ -334,6 +334,10 @@
 <div aria-label="OCR detected text regions" class="absolute inset-0 pointer-events-none" id="source-evidence-boxes"></div>
 </div>
 </div>
+<div class="hidden absolute inset-0 flex-col items-center justify-center gap-2 p-6 text-center text-on-surface-variant" id="source-evidence-unavailable" role="status">
+<span class="material-symbols-outlined text-4xl">image_not_supported</span>
+<p>Original image is not stored for this demo scan. OCR evidence and compliance results remain available.</p>
+</div>
 </div>
 </div>
 </div>
@@ -391,10 +395,11 @@
         </div>
 </section>
 </main>
-<script src="assets/app.js"></script>
-<script src="assets/auth-client.js"></script>
-<script src="assets/shell.js"></script>
-<script src="assets/ocr-client.js"></script>
+<script src="assets/demo-data.js"></script>
+<script src="assets/app.js?v=20261031-2"></script>
+<script src="assets/auth-client.js?v=20261031-2"></script>
+<script src="assets/shell.js?v=20261031-7"></script>
+<script src="assets/ocr-client.js?v=20261031-2"></script>
 <script>
     if (LL.requireRole('official')) {
                 var scanId = LL.qs('id');
@@ -434,7 +439,17 @@
                                         };
                                 });
                         }
-            sourceImage.src = (scan.sourceImageUrl ? apiOrigin + scan.sourceImageUrl : apiOrigin + '/api/scans/' + encodeURIComponent(scan.id) + '/image');
+            var sourceImageUrl = scan.sourceImageUrl || (Array.isArray(scan.sourceImages) && scan.sourceImages.length ? scan.sourceImages[0].url : '');
+            if (sourceImageUrl) {
+                sourceImage.src = apiOrigin + sourceImageUrl;
+            } else if (LL.isDemoMode()) {
+                sourceImage.classList.add('hidden');
+                sourceEvidenceBoxes.classList.add('hidden');
+                document.getElementById('source-evidence-unavailable').classList.remove('hidden');
+                document.getElementById('source-evidence-unavailable').classList.add('flex');
+            } else {
+                sourceImage.src = apiOrigin + '/api/scans/' + encodeURIComponent(scan.id) + '/image';
+            }
             sourceImage.alt = scan.fileName ? 'Original product label: ' + scan.fileName : 'Original product label scan';
                         // null = show every known evidence region (existing default
                         // behavior, unchanged). A Set of region_ids = "focused evidence
@@ -657,7 +672,9 @@
                                 if (window.JsBarcode) {
                                         JsBarcode('#export-barcode', scan.id + '|' + reportScore + '|' + reportResult, { format: 'CODE128', width: 1.4, height: 42, displayValue: false, margin: 0, lineColor: '#00274a' });
                                 }
-                                document.getElementById('export-image').src = sourceImage.src;
+                                var exportImage = document.getElementById('export-image');
+                                if (sourceImage.getAttribute('src')) exportImage.src = sourceImage.src;
+                                else exportImage.removeAttribute('src');
                                 document.getElementById('export-ocr-rows').innerHTML = exportDetections().map(function (detection) {
                                         return '<tr><td>' + exportEscape(detection.text) + '</td><td>' + Math.round(Number(detection.confidence || 0) * 100) + '%</td><td>' + exportEscape((detection.bbox || []).join(', ')) + '</td></tr>';
                                 }).join('') || '<tr><td colspan="3">No OCR detections returned.</td></tr>';
@@ -676,7 +693,9 @@
                                 return session && session.name ? Promise.resolve(session.name) : (window.LLAuth ? LLAuth.me().then(function (user) { return user.fullName || user.name || user.email; }).catch(function () { return 'Enforcement Official'; }) : Promise.resolve('Enforcement Official'));
                         }
                         function imageAsDataUrl() {
-                                return fetch(sourceImage.src, { credentials: 'include' }).then(function (response) { return response.blob(); }).then(function (blob) {
+                                var imageUrl = sourceImage.getAttribute('src');
+                                if (!imageUrl) return Promise.resolve('');
+                                return fetch(imageUrl, { credentials: 'include' }).then(function (response) { return response.blob(); }).then(function (blob) {
                                         return new Promise(function (resolve, reject) {
                                                 var reader = new FileReader();
                                                 reader.onloadend = function () { resolve(reader.result); };

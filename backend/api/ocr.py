@@ -13,19 +13,19 @@ from contextvars import ContextVar
 from io import BytesIO
 import tempfile
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 from bson import ObjectId
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response as FastAPIResponse, StreamingResponse
 from gridfs import GridFS
 from gridfs.errors import NoFile
 from starlette.datastructures import Headers
 
 from backend.database import get_database
-from backend.api.auth import official_user
+from backend.api.auth import DEMO_SESSION_HOURS, demo_user, official_user
 from backend.services.authenticity_service import build_authenticity_evidence
 from backend.services.image_integrity import compute_image_sha256
 from backend.ocr.gemini_service import (
@@ -108,6 +108,8 @@ ANALYSIS_STAGES = {
 }
 
 MAX_ANALYSIS_IMAGES = 8
+MAX_DEMO_SCAN_COUNT = 10
+MAX_DEMO_REQUEST_BYTES = 30 * 1024 * 1024
 
 
 def _report_progress(stage: str, *, error: str | None = None, result: dict[str, Any] | None = None) -> None:
@@ -197,6 +199,8 @@ def _public_scan(scan: dict[str, Any]) -> dict[str, Any]:
     public = {key: value for key, value in scan.items() if key != "_id"}
     if public.get("userId") is not None:
         public["userId"] = str(public["userId"])
+    if isinstance(public.get("expiresAt"), datetime):
+        public["expiresAt"] = public["expiresAt"].isoformat()
     return public
 
 
@@ -579,18 +583,42 @@ async def _run_multi_analysis_job(
         })
         database = get_database()
         source_images = []
-        for item in successful:
-            image = item["image"]
-            image_id = GridFS(database, collection="scan_images").put(image["contents"], filename=image["filename"], content_type=image["content_type"], scan_id=scan["id"], user_id=user["_id"])
-            source_images.append({"id": str(image_id), "fileName": image["filename"], "side": image["side"], "detectionCount": item["result"].detection_count})
-        scan["sourceImages"] = source_images
-        if source_images:
-            scan["sourceImageId"] = source_images[0]["id"]
-            scan["sourceImageUrl"] = f"/api/scans/{scan['id']}/image"
-            for source_image in source_images:
-                source_image["url"] = f"/api/scans/{scan['id']}/images/{source_images.index(source_image)}"
-        database.scans.insert_one(scan)
-        database.history.insert_one({"userId": user["_id"], "actionType": "scan_uploaded", "title": "Product label uploaded", "description": f"Multi-image OCR scan created for {scan['productName']}.", "documentId": scan["id"], "metadata": {"fileName": combined.image, "category": scan["category"], "imagesProcessed": len(successful)}, "createdAt": datetime.now(timezone.utc)})
+        if user.get("role") == "demo":
+            expires_at = datetime.now(timezone.utc) + timedelta(hours=DEMO_SESSION_HOURS)
+            session_id = user["sessionId"]
+            for image_index, item in enumerate(successful):
+                image = item["image"]
+                database.demo_scan_images.insert_one({
+                    "sessionId": session_id,
+                    "scanId": scan["id"],
+                    "imageIndex": image_index,
+                    "fileName": image["filename"],
+                    "contentType": image["content_type"],
+                    "data": image["contents"],
+                    "expiresAt": expires_at,
+                })
+                source_images.append({"fileName": image["filename"], "side": image["side"], "detectionCount": item["result"].detection_count, "url": f"/api/demo/scans/{scan['id']}/images/{image_index}"})
+            scan["sourceImages"] = source_images
+            if source_images:
+                scan["sourceImageUrl"] = source_images[0]["url"]
+            scan["demoMode"] = True
+            scan["sessionId"] = session_id
+            scan["expiresAt"] = expires_at
+            scan.pop("userId", None)
+            database.demo_scans.insert_one(scan)
+        else:
+            for item in successful:
+                image = item["image"]
+                image_id = GridFS(database, collection="scan_images").put(image["contents"], filename=image["filename"], content_type=image["content_type"], scan_id=scan["id"], user_id=user["_id"])
+                source_images.append({"id": str(image_id), "fileName": image["filename"], "side": image["side"], "detectionCount": item["result"].detection_count})
+            scan["sourceImages"] = source_images
+            if source_images:
+                scan["sourceImageId"] = source_images[0]["id"]
+                scan["sourceImageUrl"] = f"/api/scans/{scan['id']}/image"
+                for source_index, source_image in enumerate(source_images):
+                    source_image["url"] = f"/api/scans/{scan['id']}/images/{source_index}"
+            database.scans.insert_one(scan)
+            database.history.insert_one({"userId": user["_id"], "actionType": "scan_uploaded", "title": "Product label uploaded", "description": f"Multi-image OCR scan created for {scan['productName']}.", "documentId": scan["id"], "metadata": {"fileName": combined.image, "category": scan["category"], "imagesProcessed": len(successful)}, "createdAt": datetime.now(timezone.utc)})
         _report_analysis_update(98, "REPORT_GENERATION", "Generating unified compliance report", processedImages=len(successful), failedImages=total - len(successful))
         _report_progress("COMPLETED", result=_public_scan(scan))
     except Exception as exc:
@@ -607,6 +635,99 @@ def _run_multi_analysis_job_in_worker(*args: Any) -> None:
 def _run_analysis_job_in_worker(*args: Any) -> None:
     """Run blocking OCR/model work off FastAPI's event-loop thread."""
     asyncio.run(_run_analysis_job(*args))
+
+
+@router.post("/api/demo/analysis-jobs")
+async def start_demo_analysis_job(
+    background_tasks: BackgroundTasks,
+    file: list[UploadFile] = File(...),
+    product_name: str = Form(""),
+    category: str = Form("General"),
+    manufacturer: str = Form("Not specified"),
+    image_sides: str = Form("[]"),
+    user: dict[str, Any] = Depends(demo_user),
+):
+    if get_database().demo_scans.count_documents({"sessionId": user["sessionId"]}) >= MAX_DEMO_SCAN_COUNT:
+        raise HTTPException(status_code=429, detail="This demo session has reached its temporary scan limit.")
+    if not file:
+        raise HTTPException(status_code=400, detail="No file was uploaded")
+    if len(file) > MAX_ANALYSIS_IMAGES:
+        raise HTTPException(status_code=400, detail=f"Upload up to {MAX_ANALYSIS_IMAGES} images per product")
+    try:
+        requested_sides = __import__("json").loads(image_sides)
+    except (TypeError, ValueError):
+        requested_sides = []
+    images = []
+    seen_names = set()
+    total_bytes = 0
+    for index, upload in enumerate(file):
+        filename = Path(upload.filename or "").name
+        suffix = Path(filename).suffix.lower()
+        if suffix not in ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail=f"Unsupported image format for {filename}")
+        if filename.casefold() in seen_names:
+            continue
+        contents = await upload.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail=f"Uploaded file is empty: {filename}")
+        if len(contents) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=400, detail=f"File exceeds the 15MB limit: {filename}")
+        total_bytes += len(contents)
+        if total_bytes > MAX_DEMO_REQUEST_BYTES:
+            raise HTTPException(status_code=400, detail="Demo uploads are limited to 30MB per analysis.")
+        seen_names.add(filename.casefold())
+        side = requested_sides[index] if index < len(requested_sides) and requested_sides[index] in {"Front", "Back", "Left Side", "Right Side", "Top", "Bottom", "Other"} else "Other"
+        images.append({"contents": contents, "filename": filename, "content_type": upload.content_type, "side": side})
+
+    job_id = f"DM-{uuid.uuid4().hex[:12].upper()}"
+    _analysis_jobs[job_id] = {"id": job_id, "userId": user["_id"], "status": "running", "stage": "INITIALIZING", "progress": 10, "label": "Initializing demo analysis", "imageCount": len(images)}
+    background_tasks.add_task(_run_multi_analysis_job_in_worker, job_id, images, product_name, category, manufacturer, user)
+    return {"id": job_id, "status": "running", "stage": "INITIALIZING", "progress": 10, "label": "Initializing demo analysis", "imageCount": len(images)}
+
+
+@router.get("/api/demo/analysis-jobs/{job_id}")
+def get_demo_analysis_job(job_id: str, user: dict[str, Any] = Depends(demo_user)):
+    job = _analysis_jobs.get(job_id)
+    if job is None or job.get("userId") != user["_id"]:
+        raise HTTPException(status_code=404, detail="Demo analysis job not found")
+    return {key: value for key, value in job.items() if key != "userId"}
+
+
+@router.get("/api/demo/scans")
+def list_demo_scans(user: dict[str, Any] = Depends(demo_user)):
+    scans = get_database().demo_scans.find({"sessionId": user["sessionId"]}, {"_id": 0}).sort("date", -1)
+    return JSONResponse(content=[_public_scan(scan) for scan in scans], headers={"Cache-Control": "no-store"})
+
+
+@router.get("/api/demo/scans/{scan_id}")
+def get_demo_scan(scan_id: str, user: dict[str, Any] = Depends(demo_user)):
+    scan = get_database().demo_scans.find_one({"id": scan_id, "sessionId": user["sessionId"]}, {"_id": 0})
+    if scan is None:
+        raise HTTPException(status_code=404, detail="Demo scan not found")
+    return JSONResponse(content=_public_scan(scan), headers={"Cache-Control": "no-store"})
+
+
+@router.get("/api/demo/scans/{scan_id}/images/{image_index}")
+def get_demo_scan_image(scan_id: str, image_index: int, user: dict[str, Any] = Depends(demo_user)):
+    image = get_database().demo_scan_images.find_one({
+        "sessionId": user["sessionId"],
+        "scanId": scan_id,
+        "imageIndex": image_index,
+        "expiresAt": {"$gt": datetime.now(timezone.utc)},
+    })
+    if image is None:
+        raise HTTPException(status_code=404, detail="Demo source image not found")
+    return FastAPIResponse(content=image["data"], media_type=image.get("contentType") or "application/octet-stream", headers={"Cache-Control": "no-store"})
+
+
+@router.delete("/api/demo/scans/{scan_id}")
+def delete_demo_scan(scan_id: str, user: dict[str, Any] = Depends(demo_user)):
+    database = get_database()
+    result = database.demo_scans.delete_one({"id": scan_id, "sessionId": user["sessionId"]})
+    if not result.deleted_count:
+        raise HTTPException(status_code=404, detail="Demo scan not found")
+    database.demo_scan_images.delete_many({"scanId": scan_id, "sessionId": user["sessionId"]})
+    return {"success": True, "id": scan_id}
 
 
 @router.post("/api/analysis-jobs")

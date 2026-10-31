@@ -78,7 +78,8 @@
   }
 
   function startAnalysisJob(file, metadata, baseUrl) {
-    var url = (baseUrl || DEFAULT_BASE_URL) + "/api/analysis-jobs";
+    var endpoint = isDemoMode() ? "/api/demo/analysis-jobs" : "/api/analysis-jobs";
+    var url = (baseUrl || DEFAULT_BASE_URL) + endpoint;
     var formData = new FormData();
     var files = Array.isArray(file) ? file : [file];
     files.forEach(function (item) { formData.append("file", item.file || item, (item.file || item).name); });
@@ -94,18 +95,37 @@
   }
 
   function getAnalysisJob(jobId, baseUrl) {
-    return fetch((baseUrl || DEFAULT_BASE_URL) + "/api/analysis-jobs/" + encodeURIComponent(jobId), { credentials: "include", cache: "no-store" }).then(function (response) {
+    var endpoint = isDemoMode() ? "/api/demo/analysis-jobs/" : "/api/analysis-jobs/";
+    return fetch((baseUrl || DEFAULT_BASE_URL) + endpoint + encodeURIComponent(jobId), { credentials: "include", cache: "no-store" }).then(function (response) {
       return response.json().then(function (data) { return { httpOk: response.ok, status: response.status, data: data }; });
     });
   }
 
   function getScans(baseUrl) {
-    if (isDemoMode()) return Promise.resolve(global.LL.getScans());
+    if (isDemoMode()) {
+      return fetch((baseUrl || DEFAULT_BASE_URL) + "/api/demo/scans", { credentials: "include", cache: "no-store" }).then(function (response) {
+        return response.json().then(function (records) {
+          if (!response.ok) throw new Error(records.detail || "Could not load demo scan history.");
+          var serverRecords = Array.isArray(records) ? records : [];
+          var serverIds = new Set(serverRecords.map(function (scan) { return scan.id; }));
+          var localRecords = global.LL.getScans().filter(function (scan) { return !serverIds.has(scan.id); });
+          return serverRecords.concat(localRecords).sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+        });
+      });
+    }
     return fetch((baseUrl || DEFAULT_BASE_URL) + "/api/scans", { credentials: "include", cache: "no-store" }).then(function (response) { return response.json(); });
   }
 
   function getScan(id, baseUrl) {
-    if (isDemoMode()) return Promise.resolve(global.LL.getScan(id));
+    if (isDemoMode()) {
+      return fetch((baseUrl || DEFAULT_BASE_URL) + "/api/demo/scans/" + encodeURIComponent(id), { credentials: "include", cache: "no-store" }).then(function (response) {
+        if (response.status === 404) return global.LL.getScan(id);
+        return response.json().then(function (scan) {
+          if (!response.ok) throw new Error(scan.detail || "Could not load the demo scan.");
+          return scan;
+        });
+      });
+    }
     return fetch((baseUrl || DEFAULT_BASE_URL) + "/api/scans/" + encodeURIComponent(id), { credentials: "include", cache: "no-store" }).then(function (response) {
       if (!response.ok) return null;
       return response.json();
@@ -113,7 +133,8 @@
   }
 
   function deleteScan(id, baseUrl) {
-    return fetch((baseUrl || DEFAULT_BASE_URL) + "/api/scans/" + encodeURIComponent(id), { method: "DELETE", credentials: "include" })
+    var endpoint = isDemoMode() ? "/api/demo/scans/" : "/api/scans/";
+    return fetch((baseUrl || DEFAULT_BASE_URL) + endpoint + encodeURIComponent(id), { method: "DELETE", credentials: "include" })
       .then(function (response) { return response.json().then(function (data) { return { httpOk: response.ok, status: response.status, data: data }; }); });
   }
 

@@ -1,9 +1,5 @@
-/* LegalLens shared client-side app layer.
-   No backend exists yet, so this module provides a mock/local data + auth
-   layer (localStorage for data, sessionStorage for the logged-in session)
-   that every page in the portal links against. Keeps IDs consistent across
-   Dashboard -> History -> Report -> Case -> Action and
-   Dashboard -> Self-Check -> Self-Check Report -> Revision History. */
+/* Shared LegalLens UI helpers, local fixture data, and frontend session state.
+   The backend remains authoritative for official and demo API access. */
 (function (global) {
   "use strict";
 
@@ -298,10 +294,6 @@
     try {
       var secure = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
       if (secure && secure.role) return secure;
-
-      var demo = JSON.parse(localStorage.getItem(DEMO_KEY) || "null");
-      if (demo && demo.role) return demo;
-
       return null;
     } catch (e) {
       return null;
@@ -377,63 +369,19 @@
     return true;
   }
 
-  function getDemoSessionByRole(role) {
-    if (role === "official" || role === "enforcement_official") {
-      return {
-        role: "enforcement_official",
-        demoMode: true,
-        name: "Demo Enforcement Official",
-        email: "demo.official@legallens.gov.in",
-        org: "Enforcement Division",
-        loggedInAt: nowISO()
-      };
-    }
-    return {
-      role: "official",
-      demoMode: true,
-      name: "Demo Enforcement Official",
-      email: "demo.official@legallens.gov.in",
-      org: "Enforcement Division",
-      loggedInAt: nowISO()
-    };
-  }
-
   function isDemoMode() {
     var session = getSession();
     return !!(session && session.demoMode === true);
-  }
-
-  function startDemoMode(role) {
-    var session = getDemoSessionByRole(role);
-    localStorage.setItem(DEMO_KEY, JSON.stringify(session));
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return session;
-  }
-
-  function login(role, identifier) {
-    var normalizedRole = (role === "official" || role === "enforcement_official") ? "official" : "official";
-    var session = {
-      role: normalizedRole === "official" ? "enforcement_official" : "official",
-      name: "Inspector Rajesh Kumar",
-      org: "Enforcement Division",
-      loggedInAt: nowISO()
-    };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return session;
   }
 
   function logout() {
     var session = getSession();
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(DEMO_KEY);
-    if (session && session.demoMode === true) {
-      redirectTo("login.html");
-      return;
-    }
-    if (global.fetch) {
-      fetch(API_ORIGIN + "/api/auth/logout", { method: "POST", credentials: "include" }).catch(function () {});
-    }
-    redirectTo("login.html");
+    var logoutRequest = session && session.demoMode === true && global.LLAuth && global.LLAuth.logoutDemo
+      ? global.LLAuth.logoutDemo()
+      : (global.LLAuth && global.LLAuth.logout ? global.LLAuth.logout() : Promise.resolve());
+    Promise.resolve(logoutRequest).catch(function () {}).finally(function () { redirectTo("login.html"); });
   }
 
   function requireRole(role) {
@@ -462,26 +410,16 @@
   }
 
   function applyDemoModeIndicator() {
-    // Keep the preview flow available without exposing an explicit demo banner
-    // in the normal dashboard experience. The session still remains guarded by
-    // demoMode, but the UI matches the secure account layout.
-    return;
+    return isDemoMode();
   }
 
   // ---------- Scans ----------
 
   function getScans() {
-    if (isDemoMode() && (getSession().role === "enforcement_official" || getSession().role === "official")) {
-      return (global.LLDemoData && global.LLDemoData.official && global.LLDemoData.official.scans ? global.LLDemoData.official.scans.slice() : []).slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
-    }
     return loadDb().scans.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
   }
 
   function getScan(id) {
-    if (isDemoMode() && (getSession().role === "enforcement_official" || getSession().role === "official")) {
-      var scans = (global.LLDemoData && global.LLDemoData.official && global.LLDemoData.official.scans ? global.LLDemoData.official.scans : []);
-      return scans.find(function (s) { return s.id === id; }) || null;
-    }
     return loadDb().scans.find(function (s) { return s.id === id; }) || null;
   }
 
@@ -497,6 +435,7 @@
 
   function complianceStatus(record) {
     var score = normalizeComplianceScore(record);
+    if (record && record.status === "manual_review") return { type: "manual", label: "Manual Verification", icon: "warning", cls: "bg-tertiary-container text-on-tertiary-container", score: score };
     if (score === null) return { type: "manual", label: "Manual Verification", icon: "warning", cls: "bg-tertiary-container text-on-tertiary-container", score: null };
     if (score >= 100) return { type: "success", label: "Fully Compliant", icon: "check_circle", cls: "bg-secondary-container text-on-secondary-container", score: score };
     if (score >= 90) return { type: "mostly", label: "Mostly Compliant", icon: "check_circle", cls: "bg-secondary-container text-on-secondary-container", score: score };
@@ -740,7 +679,7 @@
   var currentShellPage = (global.location.pathname.split("/").pop() || "").toLowerCase();
   if (shellPages.indexOf(currentShellPage) !== -1 && !document.querySelector('script[src*="shell.js"]')) {
     var shellScript = document.createElement("script");
-    shellScript.src = "assets/shell.js";
+    shellScript.src = "assets/shell.js?v=20261031-7";
     document.head.appendChild(shellScript);
   }
 
@@ -749,8 +688,8 @@
     qs: qs, escapeHtml: escapeHtml, formatComplianceValue: formatComplianceValue, fmtDateTime: fmtDateTime, fmtDate: fmtDate, toast: toast, comingSoon: comingSoon,
     normalizeComplianceScore: normalizeComplianceScore, complianceStatus: complianceStatus,
     // auth
-    getSession: getSession, getAuthState: getAuthState, requireAuthenticated: requireAuthenticated, ensurePageAccess: ensurePageAccess, login: login, logout: logout, requireRole: requireRole,
-    isDemoMode: isDemoMode, startDemoMode: startDemoMode, getDemoSessionByRole: getDemoSessionByRole, guardDemoAction: guardDemoAction,
+    getSession: getSession, getAuthState: getAuthState, requireAuthenticated: requireAuthenticated, ensurePageAccess: ensurePageAccess, logout: logout, requireRole: requireRole,
+    isDemoMode: isDemoMode, guardDemoAction: guardDemoAction,
     // data
     getScans: getScans, getScan: getScan, createScan: createScan, statusMeta: statusMeta,
     getCases: getCases, getCase: getCase, addCaseAction: addCaseAction,

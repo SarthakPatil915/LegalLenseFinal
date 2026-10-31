@@ -98,9 +98,9 @@
         }
     </script>
 </head>
-<body class="h-full bg-background flex items-center justify-center font-sans antialiased text-on-surface">
+<body class="min-h-screen bg-background flex items-center justify-center font-sans antialiased text-on-surface">
 <!-- Main Container -->
-<main class="w-full max-w-md p-gutter sm:p-margin-page">
+<main class="w-full max-w-md px-4 py-8 sm:px-6">
 <!-- Branding Header -->
 <div class="text-center mb-8 flex flex-col items-center">
 <div class="w-16 h-16 bg-surface-container-high rounded-full flex items-center justify-center mb-4 border border-outline-variant shadow-sm">
@@ -113,16 +113,9 @@
 </div>
 <!-- Login Card -->
 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-<!-- Role Selector Tabs -->
-<div class="flex border-b border-outline-variant bg-surface-container-low">
-<div class="flex-1 py-4 text-body-md font-body-md font-semibold text-primary border-b-2 border-primary bg-surface-container-lowest transition-colors flex items-center justify-center gap-2" id="tab-official" aria-selected="true">
-<span class="material-symbols-outlined text-xl">admin_panel_settings</span>
-                    Enforcement Official
-                </div>
-</div>
 <!-- Form Container -->
-<div class="p-8">
-<form class="space-y-6" id="login-form" method="POST" onsubmit="return handleLogin(event)">
+<div class="p-6 sm:p-8">
+<form class="space-y-6" id="login-form" method="POST" aria-label="Enforcement Official sign in" onsubmit="return handleLogin(event)">
 <!-- Email/Username Field -->
 <div class="space-y-2">
 <label class="block text-label-md font-label-md text-on-surface" for="identifier">Email / Username</label>
@@ -130,7 +123,7 @@
 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 <span class="material-symbols-outlined text-outline">person</span>
 </div>
-<input class="block w-full pl-10 pr-3 py-3 border border-outline-variant rounded-DEFAULT bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:ring-1 focus:ring-primary focus:border-primary placeholder-outline transition-colors" id="identifier" name="identifier" placeholder="Enter your credentials" type="text"/>
+<input class="block w-full pl-10 pr-3 py-3 border border-outline-variant rounded-DEFAULT bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:ring-1 focus:ring-primary focus:border-primary placeholder-outline transition-colors" id="identifier" name="identifier" placeholder="Enter your credentials" type="text" autocomplete="username" required/>
 </div>
 </div>
 <!-- Password Field -->
@@ -143,26 +136,33 @@
 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 <span class="material-symbols-outlined text-outline">lock</span>
 </div>
-<input class="block w-full pl-10 pr-10 py-3 border border-outline-variant rounded-DEFAULT bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:ring-1 focus:ring-primary focus:border-primary placeholder-outline transition-colors" id="password" name="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" type="password"/>
-<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface transition-colors" onclick="var p=document.getElementById('password'); p.type = p.type==='password'?'text':'password'; this.querySelector('span').textContent = p.type==='password'?'visibility_off':'visibility';" type="button">
+<input class="block w-full pl-10 pr-10 py-3 border border-outline-variant rounded-DEFAULT bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:ring-1 focus:ring-primary focus:border-primary placeholder-outline transition-colors" id="password" name="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" type="password" autocomplete="current-password" required/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface transition-colors" aria-label="Show password" onclick="var p=document.getElementById('password'); p.type = p.type==='password'?'text':'password'; this.querySelector('span').textContent = p.type==='password'?'visibility_off':'visibility'; this.setAttribute('aria-label', p.type==='password'?'Show password':'Hide password');" type="button">
 <span class="material-symbols-outlined">visibility_off</span>
 </button>
 </div>
 </div>
-<p class="hidden text-body-md font-body-md text-error" id="login-error">Please enter your credentials to continue.</p>
+<p class="hidden text-body-md font-body-md text-error" id="login-error" role="alert" aria-live="polite">Please enter your credentials to continue.</p>
 <!-- Submit Button -->
 <button class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-DEFAULT shadow-sm text-body-lg font-body-lg font-semibold text-on-primary bg-secondary hover:bg-on-secondary-fixed-variant focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors min-h-[44px]" type="submit">
                         Secure Login
                         <span class="material-symbols-outlined text-lg">arrow_forward</span>
 </button>
-<div class="flex items-center gap-4 my-3 text-center text-body-md font-body-md text-on-surface-variant">
+<div class="flex items-center gap-4 text-center text-body-md font-body-md text-on-surface-variant" aria-hidden="true">
     <span class="h-px flex-1 bg-outline-variant"></span>
     <span class="uppercase tracking-[0.2em] text-label-md font-label-md">OR</span>
     <span class="h-px flex-1 bg-outline-variant"></span>
 </div>
-<button id="demo-login-btn" class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-primary text-primary rounded-DEFAULT bg-surface-container-lowest hover:bg-surface-container transition-colors min-h-[44px] font-semibold text-body-lg" type="button" onclick="handleDemoMode()">
-                        Continue as <span id="demo-role-label">Official</span>
-</button>
+<div class="space-y-2 text-center">
+    <button class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-secondary rounded-DEFAULT bg-secondary text-on-secondary hover:bg-on-secondary-fixed-variant transition-colors min-h-[48px] font-semibold text-body-lg" id="demo-login-btn" type="button" onclick="handleDemoMode()">
+        <span class="material-symbols-outlined">play_circle</span> Explore Demo
+    </button>
+    <p class="text-label-md font-label-md text-on-surface-variant">No registration required</p>
+</div>
+<a class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-primary text-primary rounded-DEFAULT bg-surface-container-lowest hover:bg-surface-container transition-colors min-h-[48px] font-semibold text-body-lg" href="registration.html">
+    <span class="material-symbols-outlined">person_add</span> Create New Account
+</a>
+<p class="hidden text-body-md font-body-md text-error text-center" id="demo-error" role="alert" aria-live="polite"></p>
 </form>
 </div>
 <!-- Security Footer -->
@@ -180,26 +180,36 @@
 <a class="hover:text-primary transition-colors" href="#" onclick="return LL.comingSoon(event,'Help Center')">Help Center</a>
 </div>
 </main>
-<script src="assets/demo-data.js"></script>
-<script src="assets/app.js"></script>
-<script src="assets/auth-client.js"></script>
+<script src="assets/app.js?v=20261031-2"></script>
+<script src="assets/auth-client.js?v=20261031-2"></script>
 <script>
-    var selectedRole = 'official';
-
-    function updateDemoButton() {
-        var demoBtn = document.getElementById('demo-login-btn');
-        var roleLabel = document.getElementById('demo-role-label');
-        if (!demoBtn) return;
-        if (roleLabel) {
-            roleLabel.textContent = 'Official';
+    async function handleDemoMode() {
+        var demoButton = document.getElementById('demo-login-btn');
+        var errorEl = document.getElementById('demo-error');
+        demoButton.disabled = true;
+        demoButton.textContent = 'Starting secure demo...';
+        errorEl.classList.add('hidden');
+        try {
+            var result = await LLAuth.createDemoSession();
+            sessionStorage.removeItem('legallense_session_v1');
+            sessionStorage.setItem('legallense_session_v1', JSON.stringify({
+                id: result.sessionId,
+                role: 'enforcement_official',
+                name: 'LegalLense Demo',
+                email: '',
+                org: 'Demonstration Environment',
+                demoMode: true,
+                expiresAt: result.expiresAt
+            }));
+            localStorage.removeItem('legallense_demo_session_v1');
+            localStorage.removeItem('legallense_demo_scans_v1');
+            location.href = 'official-dashboard.html';
+        } catch (err) {
+            errorEl.textContent = err.message || 'The demo is currently unavailable. Please try again later.';
+            errorEl.classList.remove('hidden');
+            demoButton.disabled = false;
+            demoButton.innerHTML = '<span class="material-symbols-outlined">play_circle</span> Explore Demo';
         }
-        demoBtn.className = 'w-full flex justify-center items-center gap-2 py-3 px-4 border border-primary text-primary rounded-DEFAULT bg-surface-container-lowest hover:bg-surface-container transition-colors min-h-[44px] font-semibold text-body-lg';
-    }
-
-    function handleDemoMode() {
-        var demoSession = LL.startDemoMode('official');
-        location.href = 'official-dashboard.html';
-        return demoSession;
     }
 
     async function handleLogin(e) {
@@ -216,7 +226,7 @@
         submit.disabled = true;
         submit.textContent = 'Signing in...';
         try {
-            var result = await LLAuth.login({ email: identifier, password: password, role: selectedRole });
+            var result = await LLAuth.login({ email: identifier, password: password, role: 'official' });
             sessionStorage.setItem('legallense_session_v1', JSON.stringify({
                 id: result.user.id,
                 role: result.user.role,
@@ -234,6 +244,5 @@
         return false;
     }
 
-    updateDemoButton();
 </script>
 </body></html>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html lang="en"><head>
 <meta charset="utf-8"/>
@@ -101,6 +101,40 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+        .dashboard-content,
+        .dashboard-main,
+        .dashboard-summary-card,
+        .dashboard-recent-section,
+        .dashboard-recent-card { min-width: 0; }
+        .dashboard-content { width: 100%; max-width: 100%; margin-left: 0; }
+        .dashboard-recent-cards { display: none; }
+        .dashboard-main { padding: 28px clamp(16px, 3vw, 36px); }
+        @media (min-width: 360px) and (max-width: 767px) {
+            .dashboard-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+            .dashboard-summary-card { padding: 16px; }
+            .dashboard-summary-card .dashboard-stat-label { font-size: 11px; line-height: 1.4; }
+            .dashboard-stat-grid { margin-bottom: 24px; }
+        }
+        @media (max-width: 359px) {
+            .dashboard-stat-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+            .dashboard-summary-card { padding: 16px; }
+            .dashboard-stat-grid { margin-bottom: 24px; }
+        }
+        @media (max-width: 900px) {
+            .dashboard-main { padding: 20px 16px 28px; }
+            .dashboard-recent-table { display: none; }
+            .dashboard-recent-cards { display: grid; gap: 12px; padding: 12px; }
+            .dashboard-recent-heading { padding: 16px; gap: 10px; }
+            .dashboard-recent-heading h2 { font-size: 18px; }
+            .dashboard-recent-card { border: 1px solid #c3c6d0; border-radius: 10px; padding: 14px; background: #fff; }
+            .dashboard-recent-card dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; margin: 12px 0 0; }
+            .dashboard-recent-card dt { color: #737780; font-size: 11px; }
+            .dashboard-recent-card dd { margin: 3px 0 0; color: #191c1d; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+            .dashboard-recent-card .dashboard-view-report { min-height: 42px; margin-top: 12px; width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .dashboard-recent-card { transition: none !important; }
+        }
     </style>
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex">
@@ -165,7 +199,7 @@
 </div>
 </aside>
 <!-- Main Content Area -->
-<div class="flex-1 ml-[260px] flex flex-col min-h-screen">
+<div class="dashboard-content w-full flex-1 min-w-0 flex flex-col min-h-screen">
 <!-- TopAppBar -->
 <header class="flex justify-between items-center h-16 px-8 sticky top-0 z-40 bg-surface border-b border-outline-variant transition-all duration-200 ease-in-out">
 <!-- Left Side: Search (implied on left per JSON, but putting links for structural balance if search isn't explicitly detailed, we'll follow JSON nav links) -->
@@ -194,7 +228,7 @@
 </div>
 </header>
 <!-- Canvas / Page Content -->
-<main class="flex-1 p-margin-page bg-background max-w-container-max w-full mx-auto">
+<main class="dashboard-main flex-1 bg-background max-w-container-max w-full mx-auto">
 <!-- Breadcrumbs -->
 <nav aria-label="Breadcrumb" class="flex text-body-md font-body-md text-on-surface-variant mb-6">
 <ol class="inline-flex items-center gap-2">
@@ -204,11 +238,11 @@
 </ol>
 </nav>
 <!-- Summary Cards Grid -->
-<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter mb-12">
+<section class="dashboard-stat-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter mb-12">
 <!-- Card 1 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
+<div class="dashboard-summary-card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
 <div class="flex justify-between items-start">
-<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Total Scans Today</span>
+<span class="dashboard-stat-label text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Total Scans Today</span>
 <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
 <span class="material-symbols-outlined">qr_code_scanner</span>
 </div>
@@ -216,9 +250,9 @@
 <div class="text-display-lg font-display-lg text-on-surface" id="stat-total-scans">--</div>
 </div>
 <!-- Card 2 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
+<div class="dashboard-summary-card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
 <div class="flex justify-between items-start">
-<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Open Violations</span>
+<span class="dashboard-stat-label text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Open Violations</span>
 <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-on-error-container">
 <span class="material-symbols-outlined">warning</span>
 </div>
@@ -226,9 +260,9 @@
 <div class="text-display-lg font-display-lg text-on-surface" id="stat-open-violations">--</div>
 </div>
 <!-- Card 3 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
+<div class="dashboard-summary-card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
 <div class="flex justify-between items-start">
-<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Escalated Cases</span>
+<span class="dashboard-stat-label text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Escalated Cases</span>
 <div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
 <span class="material-symbols-outlined">gavel</span>
 </div>
@@ -236,9 +270,9 @@
 <div class="text-display-lg font-display-lg text-on-surface" id="stat-escalated-cases">--</div>
 </div>
 <!-- Card 4 -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
+<div class="dashboard-summary-card bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col gap-4 shadow-sm">
 <div class="flex justify-between items-start">
-<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Compliance Rate</span>
+<span class="dashboard-stat-label text-label-md font-label-md text-on-surface-variant uppercase tracking-wide">Compliance Rate</span>
 <div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
 <span class="material-symbols-outlined">check_circle</span>
 </div>
@@ -247,15 +281,15 @@
 </div>
 </section>
 <!-- Data Table Section -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface">
+<section class="dashboard-recent-section bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="dashboard-recent-heading px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface">
 <h2 class="text-headline-md font-headline-md text-primary">Recent Scans</h2>
 <button class="text-primary hover:bg-primary/5 px-3 py-1.5 rounded-lg text-body-md font-body-md font-medium transition-colors flex items-center gap-2" onclick="location.href='scan-history.html'">
                         View All
                         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 </button>
 </div>
-<div class="overflow-x-auto">
+<div class="dashboard-recent-table overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container-low border-b border-outline-variant text-body-md font-body-md text-primary">
@@ -269,17 +303,20 @@
 <tbody class="text-body-md font-body-md text-on-surface" id="recent-scans-body"></tbody>
 </table>
 </div>
+<div class="dashboard-recent-cards" id="recent-scans-cards"></div>
 </section>
 </main>
 </div>
-<script src="assets/app.js"></script>
-<script src="assets/auth-client.js"></script>
-<script src="assets/shell.js"></script>
-<script src="assets/ocr-client.js"></script>
+<script src="assets/demo-data.js"></script>
+<script src="assets/app.js?v=20261031-2"></script>
+<script src="assets/auth-client.js?v=20261031-2"></script>
+<script src="assets/shell.js?v=20261031-7"></script>
+<script src="assets/ocr-client.js?v=20261031-2"></script>
 <script>
     if (LL.requireRole('official')) {
         var session = LL.getSession();
-        document.getElementById('user-name').textContent = session.name;
+        var dashboardUserName = document.getElementById('user-name');
+        if (dashboardUserName) dashboardUserName.textContent = session.name;
 
         function renderOfficialDashboard(scans, cases, liveStats) {
             var today = new Date().toISOString().slice(0, 10);
@@ -295,6 +332,9 @@
             document.getElementById('stat-compliance-rate').textContent = (rate || liveStats.complianceRate || 82) + '%';
 
             var body = document.getElementById('recent-scans-body');
+            var cards = document.getElementById('recent-scans-cards');
+            body.innerHTML = '';
+            cards.innerHTML = '';
             scans.slice(0, 5).forEach(function (scan) {
                 var meta = LL.statusMeta(scan.status);
                 var badgeClass = scan.status === 'compliant' ? 'bg-secondary-container text-on-secondary-container' :
@@ -312,9 +352,24 @@
                     location.href = 'compliance-report.html?id=' + encodeURIComponent(scan.id);
                 });
                 body.appendChild(tr);
+                var card = document.createElement('article');
+                card.className = 'dashboard-recent-card';
+                card.innerHTML =
+                    '<h3 class="font-bold text-primary break-words">' + LL.escapeHtml(scan.productName || 'Unnamed product') + '</h3>' +
+                    '<p class="mt-1 text-xs text-on-surface-variant break-all">' + LL.escapeHtml(scan.id || '') + '</p>' +
+                    '<dl><div><dt>Date</dt><dd>' + LL.escapeHtml(LL.fmtDateTime(scan.date)) + '</dd></div>' +
+                    '<div><dt>Manufacturer</dt><dd>' + LL.escapeHtml(scan.manufacturer || 'Not recorded') + '</dd></div>' +
+                    '<div><dt>Status</dt><dd>' + LL.escapeHtml(meta.label) + '</dd></div>' +
+                    '<div><dt>Compliance score</dt><dd>' + (scan.score == null ? 'N/A' : LL.escapeHtml(String(scan.score)) + '%') + '</dd></div></dl>' +
+                    '<button class="dashboard-view-report border border-primary text-primary rounded-lg font-semibold" type="button">View Report</button>';
+                card.querySelector('button').addEventListener('click', function () {
+                    location.href = 'compliance-report.html?id=' + encodeURIComponent(scan.id);
+                });
+                cards.appendChild(card);
             });
             if (!scans.length) {
                 body.innerHTML = '<tr><td class="px-6 py-8 text-center text-on-surface-variant" colspan="5">No scans recorded yet.</td></tr>';
+                cards.innerHTML = '<div class="rounded-lg border border-outline-variant bg-white p-6 text-center text-sm text-on-surface-variant">No scans recorded yet.</div>';
             }
         }
 

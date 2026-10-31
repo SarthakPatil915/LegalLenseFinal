@@ -102,7 +102,7 @@
     header.querySelector(".ll-manufacturer-logout").addEventListener("click", function () {
       global.LLAuth.logout().catch(function () {}).finally(function () {
         sessionStorage.removeItem("legallense_session_v1");
-        global.location.replace("login.html?role=manufacturer");
+        global.location.replace("login.html");
       });
     });
   }
@@ -121,7 +121,7 @@
       render(result.user);
     }).catch(function () {
       sessionStorage.removeItem("legallense_session_v1");
-      global.location.replace("login.html?role=manufacturer");
+      global.location.replace("login.html");
     });
   }
 

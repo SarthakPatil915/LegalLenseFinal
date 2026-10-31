@@ -1,216 +1,577 @@
-﻿<!DOCTYPE html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fa">
+    <title>LegalLens - Create Account</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --registration-navy: #00274a;
+            --registration-teal: #006a6a;
+            --registration-ink: #191c1d;
+            --registration-muted: #545d69;
+            --registration-border: #d3d9e2;
+            --registration-background: #f5f7fa;
+            --registration-focus: rgba(0, 106, 106, 0.18);
+        }
 
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>LegalLens - Manufacturer Registration</title>
-<link rel="stylesheet" href="assets/tailwind.css">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        window.tailwind = window.tailwind || {}; window.tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "secondary-fixed-dim": "#76d6d5",
-                        "surface-container-low": "#f3f4f5",
-                        "secondary-container": "#90efef",
-                        "secondary": "#006a6a",
-                        "surface": "#f8f9fa",
-                        "inverse-surface": "#2e3132",
-                        "primary-fixed": "#d3e4ff",
-                        "secondary-fixed": "#93f2f2",
-                        "on-primary-fixed-variant": "#1c4877",
-                        "primary-fixed-dim": "#a2c9ff",
-                        "surface-tint": "#386090",
-                        "on-primary-fixed": "#001c38",
-                        "on-primary-container": "#82a9dd",
-                        "surface-variant": "#e1e3e4",
-                        "surface-dim": "#d9dadb",
-                        "background": "#f8f9fa",
-                        "on-error-container": "#93000a",
-                        "tertiary-fixed": "#ffdfa0",
-                        "on-tertiary-container": "#d39d00",
-                        "primary": "#00274a",
-                        "outline": "#737780",
-                        "on-background": "#191c1d",
-                        "surface-container-high": "#e7e8e9",
-                        "on-tertiary-fixed": "#261a00",
-                        "on-secondary-fixed": "#002020",
-                        "surface-container-lowest": "#ffffff",
-                        "tertiary": "#332300",
-                        "surface-container-highest": "#e1e3e4",
-                        "primary-container": "#0b3d6b",
-                        "on-secondary-container": "#006e6e",
-                        "on-error": "#ffffff",
-                        "tertiary-container": "#4e3800",
-                        "on-tertiary-fixed-variant": "#5c4300",
-                        "inverse-primary": "#a2c9ff",
-                        "outline-variant": "#c3c6d0",
-                        "inverse-on-surface": "#f0f1f2",
-                        "tertiary-fixed-dim": "#fbbc00",
-                        "surface-bright": "#f8f9fa",
-                        "on-surface": "#191c1d",
-                        "on-surface-variant": "#42474f",
-                        "on-tertiary": "#ffffff",
-                        "on-secondary": "#ffffff",
-                        "on-secondary-fixed-variant": "#004f4f",
-                        "error-container": "#ffdad6",
-                        "surface-container": "#edeeef",
-                        "on-primary": "#ffffff",
-                        "error": "#ba1a1a"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                    },
-                    "spacing": {
-                        "sidebar-width": "260px",
-                        "container-max": "1440px",
-                        "unit": "4px",
-                        "margin-page": "32px",
-                        "gutter": "24px"
-                    },
-                    "fontFamily": {
-                        "headline-lg": ["Inter"],
-                        "headline-md": ["Inter"],
-                        "label-md": ["Inter"],
-                        "display-lg": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "body-lg": ["Inter"],
-                        "body-md": ["Inter"]
-                    },
-                    "fontSize": {
-                        "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
-                        "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "600" }],
-                        "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
-                        "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
-                    }
-                }
+        * {
+            box-sizing: border-box;
+        }
+
+        body.registration-page {
+            min-height: 100vh;
+            margin: 0;
+            padding: 48px 24px;
+            background: var(--registration-background);
+            color: var(--registration-ink);
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .registration-layout {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            animation: registration-enter 400ms ease-out both;
+        }
+
+        .registration-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            color: var(--registration-navy);
+        }
+
+        .registration-brand img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .registration-brand-mark {
+            display: grid;
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            place-items: center;
+            border: 1px solid #d6e0e8;
+            border-radius: 50%;
+            background: #eaf0f5;
+            color: var(--registration-navy);
+        }
+
+        .registration-brand-mark .material-symbols-outlined {
+            font-size: 27px;
+            font-variation-settings: "FILL" 1;
+        }
+
+        .registration-brand-name {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .registration-brand-caption {
+            margin: 3px 0 0;
+            color: var(--registration-muted);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.035em;
+        }
+
+        .registration-heading {
+            margin: 0 0 6px;
+            color: var(--registration-navy);
+            font-size: clamp(24px, 4vw, 30px);
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .registration-subheading {
+            margin: 0 0 24px;
+            color: var(--registration-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .registration-card {
+            padding: 32px;
+            border: 1px solid #e0e5eb;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 12px 36px rgba(0, 39, 74, 0.08);
+        }
+
+        .registration-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 14px 16px;
+            border: 1px solid #d8e9e9;
+            border-radius: 10px;
+            background: #f0f8f8;
+            color: #28474b;
+        }
+
+        .registration-info-icon {
+            flex: 0 0 auto;
+            margin-top: 1px;
+            color: var(--registration-teal);
+            font-size: 21px;
+        }
+
+        .registration-info p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .registration-form {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px 20px;
+        }
+
+        .registration-field {
+            min-width: 0;
+        }
+
+        .registration-field-full,
+        .registration-error,
+        .registration-submit {
+            grid-column: 1 / -1;
+        }
+
+        .registration-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--registration-ink);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .registration-optional {
+            color: var(--registration-muted);
+            font-size: 12px;
+            font-weight: 400;
+        }
+
+        .registration-control-wrap {
+            position: relative;
+        }
+
+        .registration-input {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            height: 48px;
+            padding: 0 13px;
+            border: 1px solid var(--registration-border);
+            border-radius: 8px;
+            outline: none;
+            background: #fff;
+            color: var(--registration-ink);
+            font: inherit;
+            font-size: 14px;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+        }
+
+        .registration-input::placeholder {
+            color: #8993a0;
+            opacity: 1;
+        }
+
+        .registration-input:hover {
+            border-color: #9ba8b5;
+        }
+
+        .registration-input:focus {
+            border-color: var(--registration-teal);
+            box-shadow: 0 0 0 3px var(--registration-focus);
+        }
+
+        .registration-input[aria-invalid="true"] {
+            border-color: #ba1a1a;
+        }
+
+        .registration-password {
+            padding-right: 48px;
+        }
+
+        .registration-visibility {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            display: grid;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: #687482;
+            cursor: pointer;
+            transition: background-color 160ms ease, color 160ms ease;
+        }
+
+        .registration-visibility:hover {
+            background: #eef4f5;
+            color: var(--registration-teal);
+        }
+
+        .registration-visibility:focus-visible,
+        .registration-submit:focus-visible,
+        .registration-return:focus-visible {
+            outline: 3px solid var(--registration-focus);
+            outline-offset: 2px;
+        }
+
+        .registration-visibility .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        .registration-help {
+            margin: 6px 0 0;
+            color: var(--registration-muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .registration-error {
+            margin: -2px 0 0;
+            padding: 11px 13px;
+            border: 1px solid #f0c7c4;
+            border-radius: 8px;
+            background: #fff5f4;
+            color: #9c1c16;
+            font-size: 13px;
+            line-height: 1.5;
+            opacity: 1;
+            transition: opacity 160ms ease;
+        }
+
+        .registration-error[hidden] {
+            display: none;
+        }
+
+        .registration-submit {
+            display: flex;
+            min-height: 50px;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            margin-top: 2px;
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--registration-teal);
+            color: #fff;
+            cursor: pointer;
+            font: inherit;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+        .registration-submit:hover:not(:disabled) {
+            transform: translateY(-1px);
+            background: #005757;
+            box-shadow: 0 5px 12px rgba(0, 106, 106, 0.18);
+        }
+
+        .registration-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .registration-submit:disabled {
+            cursor: wait;
+            opacity: 0.72;
+        }
+
+        .registration-submit .material-symbols-outlined {
+            font-size: 19px;
+        }
+
+        .registration-spinner {
+            width: 17px;
+            height: 17px;
+            border: 2px solid rgba(255, 255, 255, 0.48);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: registration-spin 700ms linear infinite;
+        }
+
+        .registration-return {
+            margin: 22px 0 0;
+            color: var(--registration-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .registration-return a {
+            color: var(--registration-teal);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .registration-return a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes registration-enter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
-    </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+
+        @keyframes registration-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 560px) {
+            body.registration-page {
+                padding: 26px 16px;
+            }
+
+            .registration-brand {
+                margin-bottom: 22px;
+            }
+
+            .registration-heading {
+                font-size: 25px;
+            }
+
+            .registration-subheading {
+                margin-bottom: 20px;
+                font-size: 14px;
+            }
+
+            .registration-card {
+                padding: 22px 18px;
+                border-radius: 13px;
+            }
+
+            .registration-form {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 16px;
+            }
+
+            .registration-field-full,
+            .registration-error,
+            .registration-submit {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body.registration-page {
+                padding: 20px 12px;
+            }
+
+            .registration-card {
+                padding: 19px 15px;
+            }
+
+            .registration-info {
+                gap: 9px;
+                padding: 12px;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 600px) {
+            body.registration-page {
+                padding-top: 20px;
+                padding-bottom: 20px;
+            }
+
+            .registration-brand {
+                margin-bottom: 16px;
+            }
+
+            .registration-brand-mark {
+                width: 40px;
+                height: 40px;
+                flex-basis: 40px;
+            }
+
+            .registration-heading {
+                font-size: 24px;
+            }
+
+            .registration-subheading {
+                margin-bottom: 16px;
+            }
+
+            .registration-card {
+                padding: 22px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
-<body class="bg-background min-h-screen flex items-center justify-center font-body-md text-on-background p-6">
-<!-- Transactional Screen: Navigation Suppressed -->
-<main class="w-full max-w-md">
-<!-- Brand Header -->
-<div class="text-center mb-8">
-<h1 class="text-display-lg font-display-lg text-primary mb-2">LegalLens</h1>
-<p class="text-body-lg font-body-lg text-on-surface-variant">Manufacturer Registration Portal</p>
-</div>
-<!-- Registration Card -->
-<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-8 shadow-sm">
-<p class="hidden mb-2 text-body-md font-body-md text-error" id="register-error"></p>
-<form class="space-y-6" id="register-form" method="POST" onsubmit="return handleRegister(event)">
-<!-- Company Name -->
-<div>
-<label class="block text-label-md font-label-md text-primary mb-1" for="companyName">Company Name</label>
-<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" id="companyName" name="companyName" required="" type="text"/>
-</div>
-<!-- Full Name -->
-<div>
-<label class="block text-label-md font-label-md text-primary mb-1" for="fullName">Full Name</label>
-<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-on-surface" id="fullName" name="fullName" required="" type="text"/>
-</div>
-<!-- GSTIN / Registration Number -->
-<div>
-<label class="block text-label-md font-label-md text-primary mb-1" for="gstin">GSTIN / Registration Number</label>
-<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" id="gstin" name="gstin" type="text"/>
-</div>
-<!-- Email -->
-<div>
-<label class="block text-label-md font-label-md text-primary mb-1" for="email">Email Address</label>
-<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" id="email" name="email" required="" type="email"/>
-</div>
-<!-- Password -->
-<div>
-<label class="block text-label-md font-label-md text-primary mb-1" for="password">Password</label>
-<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" id="password" name="password" required="" type="password"/>
-</div>
-<!-- Confirm Password -->
-<div>
-<label class="block text-label-md font-label-md text-primary mb-1" for="confirmPassword">Confirm Password</label>
-<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-DEFAULT text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow" id="confirmPassword" name="confirmPassword" required="" type="password"/>
-</div>
-<!-- Terms & Conditions -->
-<div class="flex items-start">
-<div class="flex items-center h-5">
-<input class="h-4 w-4 text-secondary bg-surface border-outline-variant rounded-DEFAULT focus:ring-secondary focus:ring-offset-background" id="terms" name="terms" required="" type="checkbox"/>
-</div>
-<div class="ml-3 text-body-md font-body-md">
-<label class="text-on-surface-variant" for="terms">
-                            I accept the <a class="text-secondary font-medium hover:underline" href="#" onclick="return LL.comingSoon(event,'Terms and Conditions')">Terms and Conditions</a> and <a class="text-secondary font-medium hover:underline" href="#" onclick="return LL.comingSoon(event,'Privacy Policy')">Privacy Policy</a>.
-                        </label>
-</div>
-</div>
-<!-- Submit Button -->
-<div>
-<button class="w-full flex justify-center py-3 px-4 border border-transparent rounded-DEFAULT text-body-lg font-body-lg font-semibold text-on-primary bg-primary hover:bg-on-primary-fixed-variant focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors min-h-[44px] items-center" type="submit">
-                        Register Company
-                    </button>
-</div>
-</form>
-<div class="mt-6 text-center text-body-md font-body-md text-on-surface-variant">
-                Already registered? <a class="text-secondary font-medium hover:underline" href="login.html">Sign in here</a>
-</div>
-</div>
-<!-- Govt Notice -->
-<div class="mt-8 text-center text-label-md font-label-md text-on-surface-variant flex items-center justify-center gap-2">
-<span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
-            Govt. of India Official Portal
-        </div>
-</main>
-<script src="assets/app.js"></script>
-<script src="assets/auth-client.js"></script>
-<script>
-    async function handleRegister(e) {
-        e.preventDefault();
-        var companyName = document.getElementById('companyName').value.trim();
-        var fullName = document.getElementById('fullName').value.trim();
-        var gstin = document.getElementById('gstin').value.trim();
-        var email = document.getElementById('email').value.trim();
-        var password = document.getElementById('password').value;
-        var confirmPassword = document.getElementById('confirmPassword').value;
-        var terms = document.getElementById('terms').checked;
-        var errorEl = document.getElementById('register-error');
+<body class="registration-page">
+    <main class="registration-layout">
+        <header class="registration-brand" aria-label="LegalLens, Department of Consumer Affairs">
+            <span class="registration-brand-mark" aria-hidden="true">
+                <span class="material-symbols-outlined">policy</span>
+            </span>
+            <div>
+                <p class="registration-brand-name">LegalLens</p>
+                <p class="registration-brand-caption">Department of Consumer Affairs</p>
+            </div>
+        </header>
 
-        function fail(msg) {
-            errorEl.textContent = msg;
-            errorEl.classList.remove('hidden');
-            return false;
-        }
+        <h1 class="registration-heading">Create New Account</h1>
+        <p class="registration-subheading">Register your manufacturer account to get started.</p>
 
-        if (!companyName || !fullName || !email || !password || !confirmPassword) return fail('Please fill in all required fields.');
-        if (password.length < 8) return fail('Password must be at least 8 characters.');
-        if (password !== confirmPassword) return fail('Passwords do not match.');
-        if (!terms) return fail('You must accept the Terms and Conditions to continue.');
+        <section class="registration-card" aria-label="Create a Manufacturer Account">
+            <div class="registration-info" role="note">
+                <span class="material-symbols-outlined registration-info-icon" aria-hidden="true">info</span>
+                <p>Manufacturer accounts are verified by email before sign-in. Enforcement Official accounts are provisioned through authorized government channels.</p>
+            </div>
 
-        errorEl.classList.add('hidden');
-        var submit = e.target.querySelector('button[type="submit"]');
-        submit.disabled = true;
-        submit.textContent = 'Creating account...';
-        try {
-            await LLAuth.signup({ fullName: fullName, email: email, password: password, role: 'manufacturer', companyName: companyName, gstin: gstin });
-            location.href = 'verify-email.html?email=' + encodeURIComponent(email);
-        } catch (err) {
-            submit.disabled = false;
-            submit.textContent = 'Register Company';
-            return fail(err.message);
-        }
-        return false;
-    }
-</script>
-</body></html>
+            <form class="registration-form" id="register-form">
+                <div class="registration-field">
+                    <label class="registration-label" for="companyName">Company name</label>
+                    <input class="registration-input" id="companyName" name="companyName" type="text" autocomplete="organization" maxlength="160" placeholder="Enter your company name" required>
+                </div>
+                <div class="registration-field">
+                    <label class="registration-label" for="fullName">Full name</label>
+                    <input class="registration-input" id="fullName" name="fullName" type="text" autocomplete="name" minlength="2" maxlength="120" placeholder="Enter your full name" required>
+                </div>
+                <div class="registration-field">
+                    <label class="registration-label" for="gstin">GSTIN / Registration number <span class="registration-optional">(optional)</span></label>
+                    <input class="registration-input" id="gstin" name="gstin" type="text" autocomplete="off" maxlength="32" placeholder="Enter registration number">
+                </div>
+                <div class="registration-field">
+                    <label class="registration-label" for="email">Email address</label>
+                    <input class="registration-input" id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@company.com" required>
+                </div>
+                <div class="registration-field">
+                    <label class="registration-label" for="password">Password</label>
+                    <div class="registration-control-wrap">
+                        <input class="registration-input registration-password" id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Create a password" aria-describedby="password-help" required>
+                        <button class="registration-visibility" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
+                            <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                        </button>
+                    </div>
+                    <p class="registration-help" id="password-help">Use at least 8 characters.</p>
+                </div>
+                <div class="registration-field">
+                    <label class="registration-label" for="confirm-password">Confirm password</label>
+                    <div class="registration-control-wrap">
+                        <input class="registration-input registration-password" id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Re-enter your password" required>
+                        <button class="registration-visibility" type="button" data-password-toggle="confirm-password" aria-label="Show confirm password" aria-pressed="false">
+                            <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                        </button>
+                    </div>
+                </div>
+                <p class="registration-error" id="register-error" role="alert" aria-live="polite" hidden></p>
+                <button class="registration-submit" id="register-submit" type="submit">
+                    <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+                    <span id="register-submit-label">Create Account</span>
+                </button>
+            </form>
+        </section>
+
+        <p class="registration-return">Already registered? <a href="login.html">Return to official login</a></p>
+    </main>
+    <script src="assets/auth-client.js?v=20261031-2"></script>
+    <script>
+        document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var input = document.getElementById(button.dataset.passwordToggle);
+                var visible = input.type === 'password';
+                input.type = visible ? 'text' : 'password';
+                button.setAttribute('aria-label', (visible ? 'Hide ' : 'Show ') + (input.id === 'password' ? 'password' : 'confirm password'));
+                button.setAttribute('aria-pressed', String(visible));
+                button.querySelector('.material-symbols-outlined').textContent = visible ? 'visibility_off' : 'visibility';
+            });
+        });
+
+        ['password', 'confirm-password'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', function () {
+                var error = document.getElementById('register-error');
+                var confirmPassword = document.getElementById('confirm-password');
+                if (error.textContent === 'Passwords do not match.' && document.getElementById('password').value === confirmPassword.value) {
+                    error.hidden = true;
+                    confirmPassword.removeAttribute('aria-invalid');
+                }
+            });
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            var error = document.getElementById('register-error');
+            var submit = document.getElementById('register-submit');
+            var submitLabel = document.getElementById('register-submit-label');
+            var passwordInput = document.getElementById('password');
+            var confirmPasswordInput = document.getElementById('confirm-password');
+            var password = passwordInput.value;
+            error.hidden = true;
+            confirmPasswordInput.removeAttribute('aria-invalid');
+            if (password !== confirmPasswordInput.value) {
+                error.textContent = 'Passwords do not match.';
+                error.hidden = false;
+                confirmPasswordInput.setAttribute('aria-invalid', 'true');
+                confirmPasswordInput.focus();
+                return;
+            }
+            submit.disabled = true;
+            submit.setAttribute('aria-busy', 'true');
+            submit.innerHTML = '<span class="registration-spinner" aria-hidden="true"></span><span id="register-submit-label">Creating account...</span>';
+            try {
+                var email = document.getElementById('email').value.trim();
+                await LLAuth.signup({
+                    fullName: document.getElementById('fullName').value.trim(),
+                    email: email,
+                    password: password,
+                    role: 'manufacturer',
+                    companyName: document.getElementById('companyName').value.trim(),
+                    gstin: document.getElementById('gstin').value.trim()
+                });
+                location.href = 'verify-email.html?email=' + encodeURIComponent(email);
+            } catch (err) {
+                error.textContent = err.message || 'Account creation failed. Please try again.';
+                error.hidden = false;
+                submit.disabled = false;
+                submit.removeAttribute('aria-busy');
+                submit.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">person_add</span><span id="register-submit-label">Create Account</span>';
+            }
+        });
+    </script>
+</body>
+</html>

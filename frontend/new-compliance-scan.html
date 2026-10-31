@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
@@ -192,7 +192,7 @@
 </div>
 </nav>
 <!-- Main Content Area -->
-<div class="flex-1 ml-[260px] flex flex-col min-h-screen">
+<div class="flex-1 flex flex-col min-h-screen min-w-0">
 <!-- TopAppBar -->
 <header class="bg-surface border-b border-outline-variant flex justify-between items-center h-16 px-8 sticky top-0 z-40">
 <div class="flex items-center gap-8">
@@ -361,10 +361,11 @@
 </div>
 </main>
 </div>
-<script src="assets/app.js"></script>
-<script src="assets/auth-client.js"></script>
-<script src="assets/shell.js"></script>
-<script src="assets/ocr-client.js"></script>
+<script src="assets/demo-data.js"></script>
+<script src="assets/app.js?v=20261031-2"></script>
+<script src="assets/auth-client.js?v=20261031-2"></script>
+<script src="assets/shell.js?v=20261031-7"></script>
+<script src="assets/ocr-client.js?v=20261031-2"></script>
 <script>
     if (LL.requireRole('official')) {
         var chosenFiles = [];
@@ -753,7 +754,11 @@
                 if (!response.httpOk) throw new Error(response.data.detail || 'Could not read analysis status.');
                 var job = response.data;
                 renderProgress(job);
-                if (job.status === 'failed') { showAnalysisFailure(job); return; }
+                if (job.status === 'failed') {
+                    showAnalysisFailure(job);
+                    restoreAnalyzeButton(originalBtnHtml);
+                    return;
+                }
                 if (job.status === 'completed') {
                     var payload = { httpOk: true, data: job.result };
                     renderResults(payload);
@@ -765,6 +770,7 @@
                 analysisPollTimer = window.setTimeout(function () { pollAnalysis(jobId, originalBtnHtml); }, 600);
             }).catch(function (err) {
                 showAnalysisFailure({ label: 'Reading analysis status', error: err.message });
+                restoreAnalyzeButton(originalBtnHtml);
             });
         }
 
@@ -899,24 +905,24 @@
                 '<p class="mt-4 text-label-md font-label-md text-on-surface-variant italic">OCR evidence from all successfully processed product views was combined before Legal Metrology evaluation.</p>';
         }
 
-        function createDemoAnalysisResult() {
-            var demoDetections = [
-                { text: 'DEMO PREMIUM CHIPS', confidence: 0.98 },
-                { text: 'NET QTY: 50 g', confidence: 0.96 },
-                { text: 'MRP: Rs. 120/- INCLUSIVE OF ALL TAXES', confidence: 0.93 },
-                { text: 'MANUFACTURED: MAY 2026', confidence: 0.88 },
-                { text: 'CONSUMER CARE: support@example.in', confidence: 0.91 }
-            ];
-            return {
-                success: true,
-                detection_count: demoDetections.length,
-                detections: demoDetections,
-                imageResults: chosenFiles.map(function (item) {
-                    return { side: item.side || 'Other', success: true, detectionCount: demoDetections.length };
-                }),
-                id: 'DEMO-UPLOAD-' + Date.now().toString(36).toUpperCase(),
-                compliance: { score: 92, status: 'compliant' }
-            };
+        function restoreAnalyzeButton(originalBtnHtml) {
+            analyzeBtn.disabled = false;
+            analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            analyzeBtn.innerHTML = originalBtnHtml;
+        }
+
+        function runDemoAnalysis(originalBtnHtml) {
+            LLOcr.startAnalysisJob(chosenFiles, {
+                productName: chosenFiles[0].file.name,
+                category: 'General'
+            }).then(function (response) {
+                if (!response.httpOk) throw new Error(response.data.detail || 'Could not start demo analysis.');
+                renderProgress(response.data);
+                pollAnalysis(response.data.id, originalBtnHtml);
+            }).catch(function (error) {
+                showAnalysisFailure({ label: 'Starting secure demo analysis', error: error.message });
+                restoreAnalyzeButton(originalBtnHtml);
+            });
         }
 
         analyzeBtn.addEventListener('click', function () {
@@ -928,16 +934,8 @@
             analyzeBtn.innerHTML = '<span class="material-symbols-outlined">pending</span> Analysis in progress';
             renderProgress({ stage: 'INITIALIZING', progress: 10, label: 'Initializing analysis', status: 'running' });
             if (LL.isDemoMode()) {
-                window.setTimeout(function () {
-                    var demoResult = createDemoAnalysisResult();
-                    renderProgress({ stage: 'COMPLETED', progress: 100, label: 'Analysis completed', status: 'completed' });
-                    renderResults({ httpOk: true, data: demoResult });
-                    sessionStorage.setItem('legallense_compliance_result_v1', JSON.stringify(demoResult.compliance));
-                    sessionStorage.setItem('legallense_compliance_scan_v1', JSON.stringify(demoResult));
-                    analyzeBtn.disabled = false;
-                    analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    analyzeBtn.innerHTML = originalBtnHtml;
-                }, 700);
+                progressNote.textContent = 'Demo scans run the configured OCR and compliance services in isolated demo storage. Demo data expires after four hours.';
+                runDemoAnalysis(originalBtnHtml);
                 return;
             }
             LLOcr.startAnalysisJob(chosenFiles, { productName: chosenFiles[0].file.name, category: 'General' }).then(function (response) {
@@ -946,9 +944,7 @@
                 pollAnalysis(response.data.id, originalBtnHtml);
             }).catch(function (err) {
                 showAnalysisFailure({ label: 'Initializing analysis', error: err.message });
-                analyzeBtn.disabled = false;
-                analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                analyzeBtn.innerHTML = originalBtnHtml;
+                restoreAnalyzeButton(originalBtnHtml);
             });
         });
 

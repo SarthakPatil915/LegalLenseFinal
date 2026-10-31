@@ -43,6 +43,12 @@ def connect_to_mongodb() -> Database:
     _database.productRevisions.create_index([("reviewStatus", 1), ("submittedAt", -1)])
     _database.scans.create_index([("userId", 1), ("date", -1)])
     _database.sessions.create_index("expiresAt", expireAfterSeconds=0)
+    _database.demo_sessions.create_index("tokenHash", unique=True)
+    _database.demo_sessions.create_index("expiresAt", expireAfterSeconds=0)
+    _database.demo_scans.create_index([("sessionId", 1), ("date", -1)])
+    _database.demo_scans.create_index("expiresAt", expireAfterSeconds=0)
+    _database.demo_scan_images.create_index([("sessionId", 1), ("scanId", 1), ("imageIndex", 1)], unique=True)
+    _database.demo_scan_images.create_index("expiresAt", expireAfterSeconds=0)
     _database.history.create_index([("userId", 1), ("createdAt", -1)])
     logger.info("Connected to MongoDB database '%s'", DATABASE_NAME)
     return _database

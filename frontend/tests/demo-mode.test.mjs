@@ -18,6 +18,7 @@ function loadScripts() {
     documentElement: { classList: { add() {} } },
     querySelectorAll() { return []; },
     querySelector() { return null; },
+    getElementById() { return null; },
     addEventListener() {},
     createElement() {
       return {
@@ -70,22 +71,20 @@ function loadScripts() {
   return context;
 }
 
-test('demo mode exposes official and manufacturer demo sessions', () => {
+test('demo mode cannot be started from a frontend-only role selector', () => {
   const context = loadScripts();
-  assert.equal(typeof context.LL.startDemoMode, 'function');
+  assert.equal(context.LL.startDemoMode, undefined);
+  assert.equal(context.LL.getDemoSessionByRole, undefined);
   assert.equal(typeof context.LL.isDemoMode, 'function');
-  const official = context.LL.getDemoSessionByRole('official');
-  const manufacturer = context.LL.getDemoSessionByRole('manufacturer');
-  assert.equal(official.role, 'enforcement_official');
-  assert.equal(official.demoMode, true);
-  assert.equal(manufacturer.role, 'manufacturer');
-  assert.equal(manufacturer.demoMode, true);
+  context.localStorage.setItem('legallense_demo_session_v1', JSON.stringify({ role: 'enforcement_official', demoMode: true }));
+  assert.equal(context.LL.getAuthState(), null);
+  assert.equal(context.LL.isDemoMode(), false);
 });
 
-test('demo sessions stored in localStorage are recognized as authenticated by the centralized auth guard', () => {
+test('sessionStorage demo UI state is recognized pending server-side session validation', () => {
   const context = loadScripts();
   const demoOfficial = { role: 'enforcement_official', demoMode: true, name: 'Demo Official', email: 'demo.official@example.com' };
-  context.localStorage.setItem('legallense_demo_session_v1', JSON.stringify(demoOfficial));
+  context.sessionStorage.setItem('legallense_session_v1', JSON.stringify(demoOfficial));
 
   const auth = context.LL.getAuthState();
 
@@ -97,4 +96,20 @@ test('demo sessions stored in localStorage are recognized as authenticated by th
   assert.equal(auth.session.name, 'Demo Official');
   assert.equal(auth.session.email, 'demo.official@example.com');
   assert.equal(context.LL.requireAuthenticated(), true);
+});
+
+test('demo session UI state must be held in sessionStorage, not trusted from localStorage', () => {
+  const context = loadScripts();
+  context.localStorage.setItem('legallense_demo_session_v1', JSON.stringify({ role: 'enforcement_official', demoMode: true }));
+  assert.equal(context.LL.getSession(), null);
+  assert.equal(context.LL.saveDemoScan, undefined);
+});
+
+test('manual-review scans remain labeled for verification even with a 100% confirmed score', () => {
+  const context = loadScripts();
+  const status = context.LL.complianceStatus({ status: 'manual_review', score: 100 });
+
+  assert.equal(status.type, 'manual');
+  assert.equal(status.label, 'Manual Verification');
+  assert.equal(status.score, 100);
 });

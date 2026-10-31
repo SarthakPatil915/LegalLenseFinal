@@ -16,8 +16,10 @@ from backend.database import get_database
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 SESSION_COOKIE = "legallense_session"
+DEMO_SESSION_COOKIE = "legallense_demo_session"
 OTP_MINUTES = 10
 SESSION_DAYS = 7
+DEMO_SESSION_HOURS = 4
 
 
 def utcnow() -> datetime:
@@ -83,6 +85,16 @@ def current_user(session: str | None = Cookie(default=None, alias=SESSION_COOKIE
     return user
 
 
+def demo_user(session: str | None = Cookie(default=None, alias=DEMO_SESSION_COOKIE)) -> dict[str, Any]:
+    if not session:
+        raise HTTPException(status_code=401, detail="A valid demo session is required")
+    token_hash = hashlib.sha256(session.encode("utf-8")).hexdigest()
+    record = get_database().demo_sessions.find_one({"tokenHash": token_hash, "expiresAt": {"$gt": utcnow()}})
+    if not record:
+        raise HTTPException(status_code=401, detail="Demo session expired. Start a new demo.")
+    return {"_id": record["sessionId"], "role": "demo", "fullName": "LegalLense Demo", "sessionId": record["sessionId"]}
+
+
 def require_role(role: str) -> Callable[[dict[str, Any]], dict[str, Any]]:
     """Build a dependency that authorizes one role from the database record."""
     def dependency(user: dict[str, Any] = Depends(current_user)) -> dict[str, Any]:
@@ -137,7 +149,59 @@ class ProfileRequest(BaseModel):
 def set_session(response: Response, user: dict[str, Any]) -> None:
     token = secrets.token_urlsafe(48)
     get_database().sessions.insert_one({"tokenHash": hashlib.sha256(token.encode()).hexdigest(), "userId": user["_id"], "createdAt": utcnow(), "expiresAt": utcnow() + timedelta(days=SESSION_DAYS)})
-    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax", secure=False, max_age=SESSION_DAYS * 86400, path="/")
+    app_env = os.getenv("APP_ENV", "production").strip().lower()
+    secure_cookie = app_env not in {"development", "dev", "local"}
+    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax", secure=secure_cookie, max_age=SESSION_DAYS * 86400, path="/")
+
+
+@router.post("/demo-session")
+def create_demo_session(
+    response: Response,
+    official_session: str | None = Cookie(default=None, alias=SESSION_COOKIE),
+):
+    database = get_database()
+    if official_session:
+        database.sessions.delete_one({"tokenHash": hashlib.sha256(official_session.encode("utf-8")).hexdigest()})
+    response.delete_cookie(SESSION_COOKIE, path="/")
+    token = secrets.token_urlsafe(48)
+    session_id = secrets.token_hex(16)
+    now = utcnow()
+    expires_at = now + timedelta(hours=DEMO_SESSION_HOURS)
+    database.demo_sessions.insert_one({
+        "sessionId": session_id,
+        "tokenHash": hashlib.sha256(token.encode("utf-8")).hexdigest(),
+        "createdAt": now,
+        "expiresAt": expires_at,
+    })
+    app_env = os.getenv("APP_ENV", "production").strip().lower()
+    secure_cookie = app_env not in {"development", "dev", "local"}
+    response.set_cookie(
+        DEMO_SESSION_COOKIE,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=secure_cookie,
+        max_age=DEMO_SESSION_HOURS * 3600,
+        path="/",
+    )
+    return {"success": True, "sessionId": session_id, "expiresAt": expires_at.isoformat()}
+
+
+@router.get("/demo-session")
+def get_demo_session(user: dict[str, Any] = Depends(demo_user)):
+    return {"success": True, "sessionId": user["sessionId"], "role": "demo"}
+
+
+@router.post("/demo-session/logout")
+def logout_demo_session(
+    response: Response,
+    session: str | None = Cookie(default=None, alias=DEMO_SESSION_COOKIE),
+):
+    if session:
+        token_hash = hashlib.sha256(session.encode("utf-8")).hexdigest()
+        get_database().demo_sessions.delete_one({"tokenHash": token_hash})
+    response.delete_cookie(DEMO_SESSION_COOKIE, path="/")
+    return {"success": True}
 
 
 @router.post("/signup")
@@ -215,7 +279,11 @@ def resend_verification(payload: EmailRequest):
 
 
 @router.post("/login")
-def login(payload: LoginRequest, response: Response):
+def login(
+    payload: LoginRequest,
+    response: Response,
+    demo_session: str | None = Cookie(default=None, alias=DEMO_SESSION_COOKIE),
+):
     user = get_database().users.find_one({"email": normalize_email(str(payload.email))})
     if not user or not bcrypt.checkpw(payload.password.encode(), user["passwordHash"].encode()):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -224,6 +292,9 @@ def login(payload: LoginRequest, response: Response):
     if payload.role and user.get("role") != payload.role:
         raise HTTPException(status_code=403, detail="Invalid account type. Please use the official login.")
     get_database().users.update_one({"_id": user["_id"]}, {"$set": {"lastLoginAt": utcnow()}})
+    if demo_session:
+        get_database().demo_sessions.delete_one({"tokenHash": hashlib.sha256(demo_session.encode("utf-8")).hexdigest()})
+    response.delete_cookie(DEMO_SESSION_COOKIE, path="/")
     set_session(response, user)
     return {"success": True, "user": public_user(user)}
 

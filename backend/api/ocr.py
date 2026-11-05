@@ -93,6 +93,7 @@ _UPLOAD_TMP_DIR.mkdir(parents=True, exist_ok=True)
 
 _analysis_jobs: dict[str, dict[str, Any]] = {}
 _active_progress_job: ContextVar[str | None] = ContextVar("active_progress_job", default=None)
+ANALYSIS_JOB_RETENTION_HOURS = 24
 
 ANALYSIS_STAGES = {
     "INITIALIZING": (10, "Initializing analysis"),
@@ -112,6 +113,37 @@ MAX_DEMO_SCAN_COUNT = 10
 MAX_DEMO_REQUEST_BYTES = 30 * 1024 * 1024
 
 
+def _update_analysis_job(job_id: str, update: dict[str, Any]) -> None:
+    job = _analysis_jobs.get(job_id)
+    if job is not None:
+        job.update(update)
+    get_database().analysis_jobs.update_one({"id": job_id}, {"$set": update})
+
+
+def _create_analysis_job(job: dict[str, Any]) -> None:
+    _analysis_jobs[job["id"]] = job
+    get_database().analysis_jobs.insert_one(job)
+
+
+def _find_analysis_job(job_id: str, user_id: Any) -> dict[str, Any] | None:
+    now = datetime.now(timezone.utc)
+    job = get_database().analysis_jobs.find_one(
+        {"id": job_id, "userId": user_id, "expiresAt": {"$gt": now}},
+        {"_id": 0},
+    )
+    if job is None:
+        job = _analysis_jobs.get(job_id)
+        expires_at = job.get("expiresAt") if job is not None else None
+        if (
+            job is None
+            or job.get("userId") != user_id
+            or expires_at is None
+            or expires_at <= now
+        ):
+            return None
+    return {key: value for key, value in job.items() if key not in {"userId", "expiresAt"}}
+
+
 def _report_progress(stage: str, *, error: str | None = None, result: dict[str, Any] | None = None) -> None:
     job_id = _active_progress_job.get()
     if not job_id or job_id not in _analysis_jobs:
@@ -124,14 +156,14 @@ def _report_progress(stage: str, *, error: str | None = None, result: dict[str, 
         update.update({"status": "completed", "result": result})
     else:
         update["status"] = "running"
-    _analysis_jobs[job_id].update(update)
+    _update_analysis_job(job_id, update)
 
 
 def _report_analysis_update(progress: int, stage: str, label: str, **extra: Any) -> None:
     job_id = _active_progress_job.get()
     if not job_id or job_id not in _analysis_jobs:
         return
-    _analysis_jobs[job_id].update({"status": "running", "progress": progress, "stage": stage, "label": label, **extra})
+    _update_analysis_job(job_id, {"status": "running", "progress": progress, "stage": stage, "label": label, **extra})
 
 
 def _deduplicate_detections(results: list[OCRResult]) -> list[Any]:
@@ -680,17 +712,26 @@ async def start_demo_analysis_job(
         images.append({"contents": contents, "filename": filename, "content_type": upload.content_type, "side": side})
 
     job_id = f"DM-{uuid.uuid4().hex[:12].upper()}"
-    _analysis_jobs[job_id] = {"id": job_id, "userId": user["_id"], "status": "running", "stage": "INITIALIZING", "progress": 10, "label": "Initializing demo analysis", "imageCount": len(images)}
+    _create_analysis_job({
+        "id": job_id,
+        "userId": user["_id"],
+        "status": "running",
+        "stage": "INITIALIZING",
+        "progress": 10,
+        "label": "Initializing demo analysis",
+        "imageCount": len(images),
+        "expiresAt": datetime.now(timezone.utc) + timedelta(hours=ANALYSIS_JOB_RETENTION_HOURS),
+    })
     background_tasks.add_task(_run_multi_analysis_job_in_worker, job_id, images, product_name, category, manufacturer, user)
     return {"id": job_id, "status": "running", "stage": "INITIALIZING", "progress": 10, "label": "Initializing demo analysis", "imageCount": len(images)}
 
 
 @router.get("/api/demo/analysis-jobs/{job_id}")
 def get_demo_analysis_job(job_id: str, user: dict[str, Any] = Depends(demo_user)):
-    job = _analysis_jobs.get(job_id)
-    if job is None or job.get("userId") != user["_id"]:
+    job = _find_analysis_job(job_id, user["_id"])
+    if job is None:
         raise HTTPException(status_code=404, detail="Demo analysis job not found")
-    return {key: value for key, value in job.items() if key != "userId"}
+    return job
 
 
 @router.get("/api/demo/scans")
@@ -767,17 +808,26 @@ async def start_analysis_job(
         images.append({"contents": contents, "filename": filename, "content_type": upload.content_type, "side": side})
 
     job_id = f"AN-{uuid.uuid4().hex[:12].upper()}"
-    _analysis_jobs[job_id] = {"id": job_id, "userId": user["_id"], "status": "running", "stage": "INITIALIZING", "progress": 10, "label": "Initializing analysis", "imageCount": len(images)}
+    _create_analysis_job({
+        "id": job_id,
+        "userId": user["_id"],
+        "status": "running",
+        "stage": "INITIALIZING",
+        "progress": 10,
+        "label": "Initializing analysis",
+        "imageCount": len(images),
+        "expiresAt": datetime.now(timezone.utc) + timedelta(hours=ANALYSIS_JOB_RETENTION_HOURS),
+    })
     background_tasks.add_task(_run_multi_analysis_job_in_worker, job_id, images, product_name, category, manufacturer, user)
     return {"id": job_id, "status": "running", "stage": "INITIALIZING", "progress": 10, "label": "Initializing analysis", "imageCount": len(images)}
 
 
 @router.get("/api/analysis-jobs/{job_id}")
 def get_analysis_job(job_id: str, user: dict[str, Any] = Depends(official_user)):
-    job = _analysis_jobs.get(job_id)
-    if job is None or job.get("userId") != user["_id"]:
+    job = _find_analysis_job(job_id, user["_id"])
+    if job is None:
         raise HTTPException(status_code=404, detail="Analysis job not found")
-    return {key: value for key, value in job.items() if key != "userId"}
+    return job
 
 
 @router.get("/api/scans")

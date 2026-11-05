@@ -749,9 +749,14 @@
             resultsBody.innerHTML = '<div class="flex items-start gap-3 text-error"><span class="material-symbols-outlined">warning</span><div><p class="font-bold">Analysis failed</p><p class="text-body-md font-body-md text-on-surface-variant">We couldn\'t complete the product analysis.</p><button class="mt-4 px-4 py-2 bg-primary text-on-primary rounded-lg font-bold" type="button" onclick="location.reload()">Retry Analysis</button></div></div>';
         }
 
-        function pollAnalysis(jobId, originalBtnHtml) {
+        function pollAnalysis(jobId, originalBtnHtml, retryCount) {
+            retryCount = retryCount || 0;
             LLOcr.getAnalysisJob(jobId).then(function (response) {
-                if (!response.httpOk) throw new Error(response.data.detail || 'Could not read analysis status.');
+                if (!response.httpOk) {
+                    var statusError = new Error(response.data.detail || 'Could not read analysis status.');
+                    statusError.status = response.status;
+                    throw statusError;
+                }
                 var job = response.data;
                 renderProgress(job);
                 if (job.status === 'failed') {
@@ -767,8 +772,17 @@
                     window.setTimeout(function () { location.href = 'compliance-report.html?id=' + encodeURIComponent(job.result.id); }, 800);
                     return;
                 }
-                analysisPollTimer = window.setTimeout(function () { pollAnalysis(jobId, originalBtnHtml); }, 600);
+                analysisPollTimer = window.setTimeout(function () { pollAnalysis(jobId, originalBtnHtml, 0); }, 1200);
             }).catch(function (err) {
+                var retryable = err.status === undefined || err.status === 0 || err.status === 408 || err.status === 429 || err.status >= 500;
+                if (retryable && retryCount < 12) {
+                    progressLabel.textContent = 'Reconnecting...';
+                    progressNote.textContent = 'Your analysis is still running. Reconnecting to the server (' + (retryCount + 1) + '/12)...';
+                    analysisPollTimer = window.setTimeout(function () {
+                        pollAnalysis(jobId, originalBtnHtml, retryCount + 1);
+                    }, Math.min(5000, 1000 * Math.pow(2, Math.min(retryCount, 3))));
+                    return;
+                }
                 showAnalysisFailure({ label: 'Reading analysis status', error: err.message });
                 restoreAnalyzeButton(originalBtnHtml);
             });

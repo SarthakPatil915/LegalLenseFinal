@@ -164,6 +164,12 @@
             line-height: 1.4;
         }
 
+        .registration-optional {
+            color: var(--registration-muted);
+            font-size: 12px;
+            font-weight: 400;
+        }
+
         .registration-control-wrap {
             position: relative;
         }
@@ -459,8 +465,16 @@
 
             <form class="registration-form" id="register-form">
                 <div class="registration-field">
+                    <label class="registration-label" for="companyName">Company name</label>
+                    <input class="registration-input" id="companyName" name="companyName" type="text" autocomplete="organization" maxlength="160" placeholder="Enter your company name" required>
+                </div>
+                <div class="registration-field">
                     <label class="registration-label" for="fullName">Full name</label>
                     <input class="registration-input" id="fullName" name="fullName" type="text" autocomplete="name" minlength="2" maxlength="120" placeholder="Enter your full name" required>
+                </div>
+                <div class="registration-field">
+                    <label class="registration-label" for="gstin">GSTIN / Registration number <span class="registration-optional">(optional)</span></label>
+                    <input class="registration-input" id="gstin" name="gstin" type="text" autocomplete="off" maxlength="32" placeholder="Enter registration number">
                 </div>
                 <div class="registration-field">
                     <label class="registration-label" for="email">Email address</label>
@@ -544,7 +558,9 @@
                 await LLAuth.signup({
                     fullName: document.getElementById('fullName').value.trim(),
                     email: email,
-                    password: password
+                    password: password,
+                    companyName: document.getElementById('companyName').value.trim(),
+                    gstin: document.getElementById('gstin').value.trim()
                 });
                 location.href = 'verify-email.html?email=' + encodeURIComponent(email);
             } catch (err) {

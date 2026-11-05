@@ -33,7 +33,7 @@ test('login page exposes only the official email/password API form', () => {
   assert.equal((login.match(/<form\b/g) || []).length, 1);
 });
 
-test('new account registration submits only identity credentials and keeps email verification', () => {
+test('new account registration includes company details and keeps email verification', () => {
   const registration = readFrontendFile('registration.html');
 
   assert.match(registration, /Create New Account/);
@@ -41,9 +41,10 @@ test('new account registration submits only identity credentials and keeps email
   assert.match(registration, /registration-card[\s\S]*border-radius: 16px/);
   assert.match(registration, /registration-info[\s\S]*APP_ENV=demo[\s\S]*non-sensitive demonstration data only/);
   assert.match(registration, /LLAuth\.signup\(\{/);
-  assert.match(registration, /LLAuth\.signup\(\{\s*fullName: document\.getElementById\('fullName'\)\.value\.trim\(\),\s*email: email,\s*password: password\s*\}\)/);
+  assert.match(registration, /id="companyName"/);
+  assert.match(registration, /id="gstin"/);
+  assert.match(registration, /LLAuth\.signup\(\{\s*fullName: document\.getElementById\('fullName'\)\.value\.trim\(\),\s*email: email,\s*password: password,\s*companyName: document\.getElementById\('companyName'\)\.value\.trim\(\),\s*gstin: document\.getElementById\('gstin'\)\.value\.trim\(\)\s*\}\)/);
   assert.doesNotMatch(registration, /role:\s*['"](?:manufacturer|official)['"]/);
-  assert.doesNotMatch(registration, /id="(?:companyName|gstin)"/);
   assert.match(registration, /verify-email\.html\?email=/);
   assert.match(registration, /confirm-password/);
   assert.match(registration, /data-password-toggle="password"/);
